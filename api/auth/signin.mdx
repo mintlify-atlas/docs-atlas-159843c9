@@ -1,0 +1,405 @@
+---
+title: 'Sign In'
+api: 'POST /api/auth/signin'
+description: 'Authenticate an existing user with email and password'
+---
+
+## Overview
+
+This endpoint authenticates an existing user using their email and password with Supabase Authentication. Upon successful login, the user receives session tokens and is redirected to the homepage.
+
+## Authentication
+
+<Note>This endpoint does not require prior authentication (it creates the authentication session).</Note>
+
+## Rate Limiting
+
+This endpoint is protected by rate limiting middleware:
+- **Default limit**: 100 requests per 60 seconds
+- Returns `429 Too Many Requests` when limit is exceeded
+- Prevents brute force attacks
+
+## Request Body
+
+This endpoint accepts `application/x-www-form-urlencoded` form data (typically from an HTML form submission).
+
+<ParamField body="email" type="string" required>
+  User's registered email address.
+  
+  **Example**: `user@example.com`
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  User's password.
+  
+  **Example**: `SecurePass123!`
+</ParamField>
+
+## Response
+
+<Note>
+  Upon successful authentication, this endpoint **redirects** to the homepage (`/`) with a `302 Found` status code.
+</Note>
+
+The redirect response includes:
+
+<ResponseField name="Location" type="header">
+  Redirect URL: `/`
+</ResponseField>
+
+<ResponseField name="Set-Cookie" type="header">
+  Session cookies containing authentication tokens
+</ResponseField>
+
+## Cookies Set
+
+<Note>
+  Upon successful sign-in, the following HTTP-only cookies are automatically set:
+</Note>
+
+<ResponseField name="sb-access-token" type="cookie">
+  **Attributes**: HttpOnly, Secure, SameSite=Lax, Max-Age=7 days
+  
+  Contains the Supabase access token for authenticated requests
+</ResponseField>
+
+<ResponseField name="sb-refresh-token" type="cookie">
+  **Attributes**: HttpOnly, Secure, SameSite=Lax, Max-Age=7 days
+  
+  Contains the Supabase refresh token to maintain the session
+</ResponseField>
+
+## Example Request
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST "https://anidev.vercel.app/api/auth/signin" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "email=user@example.com&password=SecurePass123!" \
+  -L \
+  -c cookies.txt
+```
+
+```javascript Fetch
+const formData = new FormData();
+formData.append('email', 'user@example.com');
+formData.append('password', 'SecurePass123!');
+
+const response = await fetch('https://anidev.vercel.app/api/auth/signin', {
+  method: 'POST',
+  body: formData,
+  credentials: 'include', // Important: Include cookies
+  redirect: 'manual' // Handle redirect manually if needed
+});
+
+if (response.status === 302) {
+  // Successfully signed in, redirected to homepage
+  window.location.href = response.headers.get('Location');
+}
+```
+
+```typescript TypeScript
+interface SignInCredentials {
+  email: string;
+  password: string;
+}
+
+const signIn = async (credentials: SignInCredentials): Promise<void> => {
+  const formData = new FormData();
+  formData.append('email', credentials.email);
+  formData.append('password', credentials.password);
+
+  const response = await fetch('https://anidev.vercel.app/api/auth/signin', {
+    method: 'POST',
+    body: formData,
+    credentials: 'include',
+    redirect: 'manual'
+  });
+
+  if (response.status === 302) {
+    // Sign in successful - redirect
+    const redirectUrl = response.headers.get('Location') || '/';
+    window.location.href = redirectUrl;
+  } else {
+    // Handle error
+    const error = await response.json();
+    throw new Error(error.error);
+  }
+};
+```
+
+```html HTML Form
+<!DOCTYPE html>
+<html>
+<body>
+  <form action="/api/auth/signin" method="POST">
+    <div>
+      <label for="email">Email:</label>
+      <input 
+        type="email" 
+        id="email" 
+        name="email" 
+        required 
+        placeholder="user@example.com"
+      />
+    </div>
+    
+    <div>
+      <label for="password">Password:</label>
+      <input 
+        type="password" 
+        id="password" 
+        name="password" 
+        required
+        placeholder="Enter your password"
+      />
+    </div>
+    
+    <button type="submit">Sign In</button>
+  </form>
+</body>
+</html>
+```
+
+```javascript React Example
+import { useState } from 'react';
+
+function SignInForm() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append('email', email);
+      formData.append('password', password);
+
+      const response = await fetch('/api/auth/signin', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+        redirect: 'manual'
+      });
+
+      if (response.status === 302) {
+        // Success! Redirect to homepage
+        window.location.href = '/';
+      } else {
+        const result = await response.json();
+        setError(result.error || 'Failed to sign in');
+      }
+    } catch (err) {
+      setError('An error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <div>
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+      </div>
+      <div>
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+        />
+      </div>
+      {error && <div className="error">{error}</div>}
+      <button type="submit" disabled={loading}>
+        {loading ? 'Signing in...' : 'Sign In'}
+      </button>
+    </form>
+  );
+}
+```
+
+</CodeGroup>
+
+## Success Response
+
+**Status Code**: `302 Found` (Redirect)
+
+**Headers**:
+```
+Location: /
+Set-Cookie: sb-access-token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...; HttpOnly; Secure; SameSite=Lax; Max-Age=604800; Path=/
+Set-Cookie: sb-refresh-token=v1.MRjyg-VNJ8H7zN...; HttpOnly; Secure; SameSite=Lax; Max-Age=604800; Path=/
+```
+
+## Error Responses
+
+### Missing Credentials
+
+**Status Code**: `400 Bad Request`
+
+```json
+{
+  "error": "Email and password are required",
+  "type": "validation"
+}
+```
+
+### Invalid Credentials
+
+**Status Code**: `401 Unauthorized`
+
+```json
+{
+  "error": "Invalid email or password",
+  "type": "unauthorized"
+}
+```
+
+### Account Not Found
+
+**Status Code**: `401 Unauthorized`
+
+```json
+{
+  "error": "No user found with this email",
+  "type": "unauthorized"
+}
+```
+
+### Rate Limit Exceeded
+
+**Status Code**: `429 Too Many Requests`
+
+```json
+{
+  "error": "Too many requests, please try again later",
+  "type": "tooManyRequests"
+}
+```
+
+<ResponseField name="Retry-After" type="header">
+  Number of seconds to wait before making another request
+</ResponseField>
+
+### Server Error
+
+**Status Code**: `500 Internal Server Error`
+
+```json
+{
+  "error": "Internal server error"
+}
+```
+
+## Security Features
+
+<Warning>
+  **Important Security Notes:**
+  - Passwords are never stored in plain text - Supabase uses secure bcrypt hashing
+  - Session tokens are stored in HTTP-only cookies to prevent XSS attacks
+  - Cookies use the Secure flag (HTTPS only) in production
+  - SameSite=Lax prevents CSRF attacks
+  - Rate limiting prevents brute force login attempts
+  - Failed login attempts do not reveal whether the email exists
+</Warning>
+
+## Session Management
+
+Once signed in:
+
+- **Access Token**: Valid for 1 hour by default
+- **Refresh Token**: Valid for 7 days (matches cookie max-age)
+- **Auto-Refresh**: The client should implement token refresh logic before expiration
+- **Cookie Expiry**: Cookies expire after 7 days, requiring re-authentication
+
+## Handling Authentication State
+
+```javascript
+// Check if user is authenticated
+const checkAuth = async () => {
+  try {
+    const response = await fetch('/api/auth/session', {
+      credentials: 'include'
+    });
+    
+    if (response.ok) {
+      const session = await response.json();
+      return session.user;
+    }
+  } catch (err) {
+    console.error('Not authenticated');
+  }
+  return null;
+};
+
+// Use in your app
+const user = await checkAuth();
+if (!user) {
+  // Redirect to sign in page
+  window.location.href = '/signin';
+}
+```
+
+## Redirect Behavior
+
+<Note>
+  **Default Redirect**: After successful sign-in, users are redirected to `/` (homepage).
+  
+  To customize the redirect destination, you can:
+  1. Add a `redirect` query parameter to the form action
+  2. Modify the endpoint to accept a `returnTo` parameter
+  3. Store the intended destination in session storage before redirecting to sign-in
+</Note>
+
+## Form Integration Example
+
+```astro
+---
+// signin.astro
+const error = Astro.url.searchParams.get('error');
+---
+
+<form action="/api/auth/signin" method="POST">
+  <input 
+    type="email" 
+    name="email" 
+    placeholder="Email" 
+    required 
+  />
+  <input 
+    type="password" 
+    name="password" 
+    placeholder="Password" 
+    required 
+  />
+  
+  {error && <p class="error">{error}</p>}
+  
+  <button type="submit">Sign In</button>
+  
+  <p>
+    Don't have an account? 
+    <a href="/signup">Sign up</a>
+  </p>
+</form>
+```
+
+## Related Endpoints
+
+- [Sign Up](/api/auth/signup) - Create a new user account
+- [Sign Out](/api/auth/signout) - End the current session
+- [Session](/api/auth/session) - Check current authentication status
+- [Get Profile](/api/user/profile) - Retrieve authenticated user's profile

@@ -1,0 +1,450 @@
+---
+title: 'GET /api/animes/getAnime'
+description: 'Get detailed information about a specific anime by its MyAnimeList ID'
+---
+
+## Endpoint
+
+```
+GET /api/animes/getAnime
+```
+
+## Description
+
+Retrieve comprehensive details about a specific anime using its MyAnimeList (MAL) ID. This endpoint returns complete anime information including metadata, images, trailers, genres, studios, and more. The response is cached for 1 hour for optimal performance.
+
+## Authentication
+
+<Note>
+This endpoint is publicly accessible and does not require authentication.
+</Note>
+
+## Rate Limiting
+
+- **Limit**: 100 requests per 60 seconds per IP
+- **Headers**: Rate limit information included in response headers
+
+## Query Parameters
+
+<ParamField query="id" type="number" required>
+  The MyAnimeList ID of the anime to retrieve. Must be a positive integer.
+  
+  **Example**: `id=16498`
+</ParamField>
+
+<ParamField query="parentalControl" type="boolean" default="true">
+  Apply parental control filtering. When enabled, restricts access to mature content based on rating.
+  
+  Set to `false` to disable filtering and allow all content.
+  
+  **Example**: `parentalControl=false`
+</ParamField>
+
+## Response
+
+<ResponseField name="data" type="object">
+  Anime object with complete details
+  
+  <Expandable title="Anime Object Properties">
+    <ResponseField name="mal_id" type="number" required>
+      MyAnimeList ID (unique identifier)
+    </ResponseField>
+    
+    <ResponseField name="title" type="string" required>
+      Primary anime title
+    </ResponseField>
+    
+    <ResponseField name="title_english" type="string">
+      English title
+    </ResponseField>
+    
+    <ResponseField name="title_japanese" type="string">
+      Japanese title (romaji or kanji)
+    </ResponseField>
+    
+    <ResponseField name="title_synonyms" type="array">
+      Alternative titles and synonyms
+    </ResponseField>
+    
+    <ResponseField name="type" type="string">
+      Anime type (TV, Movie, OVA, ONA, Special, Music, etc.)
+    </ResponseField>
+    
+    <ResponseField name="source" type="string">
+      Source material (Manga, Light Novel, Original, Game, Visual Novel, etc.)
+    </ResponseField>
+    
+    <ResponseField name="episodes" type="number">
+      Total number of episodes (null for ongoing or unknown)
+    </ResponseField>
+    
+    <ResponseField name="status" type="string" required>
+      Airing status (Finished Airing, Currently Airing, Not yet aired)
+    </ResponseField>
+    
+    <ResponseField name="airing" type="boolean">
+      Whether the anime is currently airing
+    </ResponseField>
+    
+    <ResponseField name="aired_from" type="string">
+      Start date in ISO 8601 format
+    </ResponseField>
+    
+    <ResponseField name="aired_to" type="string">
+      End date in ISO 8601 format (null for ongoing)
+    </ResponseField>
+    
+    <ResponseField name="duration" type="string">
+      Episode duration (e.g., "24 min per ep")
+    </ResponseField>
+    
+    <ResponseField name="rating" type="string">
+      Age rating (g - all ages, pg - children, pg-13 - teens 13 or older, r - 17+, r+ - mild nudity, rx - hentai)
+    </ResponseField>
+    
+    <ResponseField name="score" type="number">
+      Average user score (0-10)
+    </ResponseField>
+    
+    <ResponseField name="scored_by" type="number">
+      Number of users who scored the anime
+    </ResponseField>
+    
+    <ResponseField name="popularity" type="number">
+      Popularity ranking on MyAnimeList
+    </ResponseField>
+    
+    <ResponseField name="members" type="number">
+      Number of community members
+    </ResponseField>
+    
+    <ResponseField name="favorites" type="number">
+      Number of times marked as favorite
+    </ResponseField>
+    
+    <ResponseField name="synopsis" type="string">
+      Full anime description and synopsis
+    </ResponseField>
+    
+    <ResponseField name="background" type="string">
+      Additional background information
+    </ResponseField>
+    
+    <ResponseField name="season" type="string">
+      Premiere season (Winter, Spring, Summer, Fall)
+    </ResponseField>
+    
+    <ResponseField name="year" type="number" required>
+      Release year
+    </ResponseField>
+    
+    <ResponseField name="broadcast_day" type="string">
+      Broadcast day of the week
+    </ResponseField>
+    
+    <ResponseField name="broadcast_time" type="string">
+      Broadcast time in HH:MM format
+    </ResponseField>
+    
+    <ResponseField name="broadcast_timezone" type="string">
+      Broadcast timezone (e.g., "Asia/Tokyo")
+    </ResponseField>
+    
+    <ResponseField name="url" type="string">
+      MyAnimeList page URL
+    </ResponseField>
+    
+    <ResponseField name="image_url" type="string">
+      Primary image URL (JPG)
+    </ResponseField>
+    
+    <ResponseField name="image_small_jpg" type="string">
+      Small JPG image URL
+    </ResponseField>
+    
+    <ResponseField name="image_large_jpg" type="string">
+      Large JPG image URL
+    </ResponseField>
+    
+    <ResponseField name="image_webp" type="string">
+      WebP format image URL (recommended)
+    </ResponseField>
+    
+    <ResponseField name="image_small_webp" type="string">
+      Small WebP format image URL
+    </ResponseField>
+    
+    <ResponseField name="image_large_webp" type="string">
+      Large WebP format image URL
+    </ResponseField>
+    
+    <ResponseField name="banner_image" type="string">
+      Wide banner image URL for hero displays
+    </ResponseField>
+    
+    <ResponseField name="youtube_id" type="string">
+      YouTube video ID for the official trailer
+    </ResponseField>
+    
+    <ResponseField name="trailer_url" type="string">
+      Full YouTube trailer URL
+    </ResponseField>
+    
+    <ResponseField name="trailer_embed_url" type="string">
+      Embeddable YouTube trailer URL
+    </ResponseField>
+    
+    <ResponseField name="trailer_image_url" type="string">
+      Trailer thumbnail image URL
+    </ResponseField>
+    
+    <ResponseField name="approved" type="boolean">
+      Whether the anime entry is approved on MyAnimeList
+    </ResponseField>
+    
+    <ResponseField name="genres" type="array" required>
+      Array of genre names (e.g., ["Action", "Adventure", "Fantasy"])
+    </ResponseField>
+    
+    <ResponseField name="studios" type="array" required>
+      Array of animation studio names
+    </ResponseField>
+    
+    <ResponseField name="producers" type="array" required>
+      Array of producer company names
+    </ResponseField>
+    
+    <ResponseField name="licensors" type="array" required>
+      Array of licensing company names
+    </ResponseField>
+    
+    <ResponseField name="themes" type="array" required>
+      Array of theme tags (e.g., ["Military", "School", "Isekai"])
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Examples
+
+### Get Anime by ID
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://your-domain.com/api/animes/getAnime?id=16498"
+```
+
+```javascript JavaScript
+const animeId = 16498;
+const response = await fetch(`https://your-domain.com/api/animes/getAnime?id=${animeId}`);
+const data = await response.json();
+console.log(data);
+```
+
+```python Python
+import requests
+
+anime_id = 16498
+response = requests.get(f'https://your-domain.com/api/animes/getAnime?id={anime_id}')
+data = response.json()
+print(data)
+```
+
+```typescript TypeScript
+interface Anime {
+  mal_id: number;
+  title: string;
+  score: number | null;
+  episodes: number | null;
+  // ... other fields
+}
+
+const animeId = 16498;
+const response = await fetch(`https://your-domain.com/api/animes/getAnime?id=${animeId}`);
+const result = await response.json() as { data: Anime };
+console.log(result.data);
+```
+</CodeGroup>
+
+### Get Anime with Parental Control Disabled
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://your-domain.com/api/animes/getAnime?id=28977&parentalControl=false"
+```
+
+```javascript JavaScript
+const params = new URLSearchParams({
+  id: '28977',
+  parentalControl: 'false'
+});
+
+const response = await fetch(`https://your-domain.com/api/animes/getAnime?${params}`);
+const data = await response.json();
+```
+</CodeGroup>
+
+## Response Example
+
+```json
+{
+  "data": {
+    "mal_id": 16498,
+    "title": "Shingeki no Kyojin",
+    "title_english": "Attack on Titan",
+    "title_japanese": "進撃の巨人",
+    "title_synonyms": ["AoT"],
+    "type": "TV",
+    "source": "Manga",
+    "episodes": 25,
+    "status": "Finished Airing",
+    "airing": false,
+    "aired_from": "2013-04-07T00:00:00.000Z",
+    "aired_to": "2013-09-29T00:00:00.000Z",
+    "duration": "24 min per ep",
+    "rating": "r - 17+ (violence & profanity)",
+    "score": 8.55,
+    "scored_by": 2500000,
+    "popularity": 1,
+    "members": 3500000,
+    "favorites": 180000,
+    "synopsis": "Centuries ago, mankind was slaughtered to near extinction by monstrous humanoid creatures called Titans, forcing humans to hide in fear behind enormous concentric walls. What makes these giants truly terrifying is that their taste for human flesh is not born out of hunger but what appears to be out of pleasure...",
+    "background": "Shingeki no Kyojin adapts content from the first 8 volumes of Hajime Isayama's award-winning manga of the same name. The last episode received a pre-airing in Tokyo on September 28, 2013.",
+    "season": "Spring",
+    "year": 2013,
+    "broadcast_day": "Sunday",
+    "broadcast_time": "01:58",
+    "broadcast_timezone": "Asia/Tokyo",
+    "url": "https://myanimelist.net/anime/16498/Shingeki_no_Kyojin",
+    "image_url": "https://cdn.myanimelist.net/images/anime/10/47347.jpg",
+    "image_small_jpg": "https://cdn.myanimelist.net/images/anime/10/47347t.jpg",
+    "image_large_jpg": "https://cdn.myanimelist.net/images/anime/10/47347l.jpg",
+    "image_webp": "https://cdn.myanimelist.net/images/anime/10/47347.webp",
+    "image_small_webp": "https://cdn.myanimelist.net/images/anime/10/47347t.webp",
+    "image_large_webp": "https://cdn.myanimelist.net/images/anime/10/47347l.webp",
+    "banner_image": "https://example.com/banners/shingeki-no-kyojin.jpg",
+    "youtube_id": "MGRm4IzK1SQ",
+    "trailer_url": "https://www.youtube.com/watch?v=MGRm4IzK1SQ",
+    "trailer_embed_url": "https://www.youtube.com/embed/MGRm4IzK1SQ",
+    "trailer_image_url": "https://i.ytimg.com/vi/MGRm4IzK1SQ/maxresdefault.jpg",
+    "approved": true,
+    "genres": ["Action", "Drama", "Fantasy", "Mystery"],
+    "studios": ["Wit Studio"],
+    "producers": ["Production I.G", "Dentsu", "Mainichi Broadcasting System", "Pony Canyon"],
+    "licensors": ["Funimation"],
+    "themes": ["Military", "Survival"]
+  }
+}
+```
+
+## Error Responses
+
+### Missing ID Parameter (400)
+
+```json
+{
+  "error": {
+    "message": "ID is required",
+    "type": "validation",
+    "statusCode": 400
+  }
+}
+```
+
+### Invalid ID Format (400)
+
+```json
+{
+  "error": {
+    "message": "Invalid anime ID",
+    "type": "validation",
+    "statusCode": 400,
+    "details": {
+      "providedId": "abc"
+    }
+  }
+}
+```
+
+### Anime Not Found (404)
+
+```json
+{
+  "error": {
+    "message": "Anime not found",
+    "type": "notFound",
+    "statusCode": 404
+  }
+}
+```
+
+### Parental Control Restriction (403)
+
+```json
+{
+  "error": {
+    "message": "Anime is restricted due to parental control settings",
+    "type": "permission",
+    "statusCode": 403
+  }
+}
+```
+
+### Rate Limit Exceeded (429)
+
+```json
+{
+  "error": {
+    "message": "Too many requests. Please try again later.",
+    "type": "rate_limit",
+    "statusCode": 429
+  }
+}
+```
+
+### Internal Server Error (500)
+
+```json
+{
+  "error": {
+    "message": "Failed to fetch anime details",
+    "type": "database",
+    "statusCode": 500
+  }
+}
+```
+
+## Features
+
+### Redis Caching
+
+This endpoint implements Redis-based caching with a 1-hour TTL (Time To Live). Cached responses are keyed by the query parameters, so different combinations of `id` and `parentalControl` are cached separately.
+
+### Parental Control
+
+When `parentalControl=true` (default), the endpoint:
+- Blocks anime with ratings: `rx - hentai` (18+)
+- Returns a 403 Forbidden error for restricted content
+- Logs parental control blocks for monitoring
+
+### Input Validation
+
+The endpoint validates:
+- **ID presence**: Ensures the `id` parameter is provided
+- **ID format**: Verifies the ID is a positive integer
+- **ID value**: Checks that the ID is greater than 0
+
+<Note>
+**Performance**: This endpoint uses aggressive caching. Repeated requests with the same parameters will be served from cache, significantly reducing database load and response time.
+</Note>
+
+<Warning>
+When parental control is enabled (default), attempting to access mature content will return a 403 error instead of the anime data. Disable parental control explicitly if you need access to all content.
+</Warning>
+
+## Use Cases
+
+- **Anime Detail Pages**: Display comprehensive information about a specific anime
+- **Recommendation Systems**: Fetch full details for recommended animes
+- **User Collections**: Show detailed info for animes in user lists
+- **Search Results**: Enrich search results with complete anime data
+- **Mobile Apps**: Provide full anime information in mobile applications

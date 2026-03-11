@@ -1,0 +1,284 @@
+---
+title: Search & Discovery
+description: Find your next favorite anime with advanced search and powerful filters
+icon: magnifying-glass
+---
+
+## Advanced Anime Search
+
+AniDev offers a comprehensive search system with multiple filter options to help you discover exactly what you're looking for.
+
+<CardGroup cols={2}>
+  <Card title="Text Search" icon="text">
+    Search by anime title with instant, debounced results
+  </Card>
+  <Card title="Multi-Filter" icon="filter">
+    Combine genres, years, studios, and more
+  </Card>
+  <Card title="Search History" icon="clock-rotate-left">
+    Access your recent searches (up to 50 items)
+  </Card>
+  <Card title="Smart Results" icon="sparkles">
+    Get accurate results with our optimized search algorithm
+  </Card>
+</CardGroup>
+
+## Search Types
+
+AniDev supports multiple search modes accessible from the search page:
+
+<Tabs>
+  <Tab title="Animes">
+    Search through thousands of anime series, movies, and OVAs with comprehensive filtering options.
+  </Tab>
+  <Tab title="Music">
+    Discover anime openings and endings by searching for songs and themes.
+  </Tab>
+  <Tab title="Characters">
+    Find anime by searching for specific characters.
+  </Tab>
+</Tabs>
+
+## How to Search
+
+<Steps>
+  <Step title="Navigate to Search">
+    Click on the search icon in the navigation bar or press `Ctrl+K` (Windows) or `Cmd+K` (Mac) from anywhere on the site.
+  </Step>
+  
+  <Step title="Enter Your Query">
+    Type your search term in the search bar. Results appear instantly as you type.
+  </Step>
+  
+  <Step title="Apply Filters (Optional)">
+    Refine your results using the filter dropdowns: genres, year, status, format, studio, season, rating, and more.
+  </Step>
+  
+  <Step title="Browse Results">
+    Scroll through the results and click on any anime card to view detailed information.
+  </Step>
+</Steps>
+
+<Note>
+  Search uses debounced input with a 300ms delay to optimize performance and reduce unnecessary API calls.
+</Note>
+
+## Available Filters
+
+When searching for anime, you have access to these powerful filters:
+
+### Genre Filter
+
+Filter by anime genres including:
+- Action, Adventure, Comedy, Drama
+- Fantasy, Horror, Mystery, Romance
+- Sci-Fi, Slice of Life, Sports
+- And many more...
+
+**Multi-select**: Choose multiple genres to narrow your search
+
+### Year Filter
+
+Find anime from specific years (1954-2025):
+- Filter by release year
+- Discover classics or the latest releases
+- Combine with other filters for precise results
+
+### Status Filter
+
+<CardGroup cols={3}>
+  <Card title="Airing" icon="signal">
+    Currently broadcasting anime
+  </Card>
+  <Card title="Finished" icon="check">
+    Completed series you can binge-watch
+  </Card>
+  <Card title="Not Yet Aired" icon="calendar">
+    Upcoming releases to anticipate
+  </Card>
+</CardGroup>
+
+### Format Filter
+
+Choose the type of content:
+- **TV Series**: Traditional episodic anime
+- **Movie**: Feature-length anime films
+- **OVA**: Original Video Animation
+- **Special**: Special episodes and OVAs
+- **ONA**: Original Net Animation
+- **Music**: Music videos and concerts
+
+### Studio Filter
+
+Filter by animation studio to find content from your favorite studios like:
+- Studio Ghibli
+- Kyoto Animation
+- MAPPA
+- Ufotable
+- And 100+ more studios
+
+### Season Filter
+
+Find anime by the season they aired:
+- Winter (January-March)
+- Spring (April-June)
+- Summer (July-September)
+- Fall (October-December)
+
+### Rating Filter
+
+Filter by content rating:
+- **Everyone (G)**: Suitable for all ages
+- **Kids (PG)**: Parental guidance suggested
+- **Teens (PG-13)**: For ages 13 and up
+- **Adults (R)**: Mature content
+- **Mild Nudity (R+)**: Contains mild nudity
+
+<Tip>
+  Enable **Parental Control** in your profile settings to automatically hide adult-rated content.
+</Tip>
+
+### Day Filter
+
+Find anime by the day they air (Sunday through Saturday)
+
+### Sort Options
+
+Order your results by:
+- **Highest Score**: Top-rated anime first
+- **Lowest Score**: Lower-rated anime first
+- **A-Z**: Alphabetical order
+- **Z-A**: Reverse alphabetical order
+
+## Using Multiple Filters
+
+Filters work together to give you precise results:
+
+```typescript
+// Example: Find action anime from 2023 by MAPPA
+{
+  genre_filter: ['action'],
+  year_filter: ['2023'],
+  studio_filter: ['mappa']
+}
+```
+
+<Steps>
+  <Step title="Select Your First Filter">
+    Start with the most important criterion (e.g., genre)
+  </Step>
+  
+  <Step title="Add More Filters">
+    Layer additional filters to narrow results
+  </Step>
+  
+  <Step title="Review Results">
+    See the filtered anime count update in real-time
+  </Step>
+  
+  <Step title="Reset if Needed">
+    Click the reset button to clear all filters and start over
+  </Step>
+</Steps>
+
+## Search History
+
+AniDev automatically tracks your search history (when enabled):
+
+- **Storage**: Up to 50 recent searches
+- **Privacy**: History is stored per user/session
+- **Management**: Clear your history anytime from the search page
+- **Deduplication**: Duplicate searches are automatically removed
+
+<Accordion title="How to view search history">
+  Click the history icon in the search bar to open your recent searches. Click any item to quickly re-run that search.
+</Accordion>
+
+<Accordion title="How to disable search history tracking">
+  Go to your profile settings and toggle off "Track Search History". This will stop saving new searches and clear your existing history.
+</Accordion>
+
+## Search Keyboard Shortcuts
+
+Use these shortcuts for faster searching:
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+K` / `Cmd+K` | Open search bar |
+| `Escape` | Close search results |
+| `Enter` | Execute search |
+| `↑` / `↓` | Navigate results |
+
+## Search Performance
+
+AniDev's search is optimized for speed:
+
+- **Debounced Input**: 300ms delay prevents excessive API calls
+- **Redis Caching**: Frequently searched terms are cached for instant results
+- **Optimized Queries**: Database queries use indexes for fast retrieval
+- **Lazy Loading**: Results load as you scroll
+
+```typescript
+// Debounce hook implementation
+const debouncedSearch = useDebounce(searchQuery, 300)
+```
+
+## Search API
+
+Search requests are sent to:
+
+```
+GET /api/animes/full?query={search_term}&{filter_params}
+```
+
+**Example with filters**:
+```
+GET /api/animes/full?query=naruto&genre_filter=action&year_filter=2002&status_filter=finished+airing
+```
+
+<Note>
+  All search queries are rate-limited to prevent abuse. The default limit is 100 requests per minute per user.
+</Note>
+
+## Search Results Display
+
+Search results are displayed as cards showing:
+
+- **Anime Poster**: High-quality cover image
+- **Title**: English and Japanese titles
+- **Rating**: User score out of 10
+- **Type**: TV, Movie, OVA, etc.
+- **Episodes**: Total episode count
+- **Status**: Airing, Finished, or Not Yet Aired
+
+<Tip>
+  Hover over any anime card to see additional information like genres and synopsis preview.
+</Tip>
+
+## Frequently Asked Questions
+
+<Accordion title="Why am I not getting any results?">
+  If your search returns no results:
+  - Check your spelling
+  - Try using fewer filters
+  - Use broader search terms
+  - Click the reset button to clear all filters
+</Accordion>
+
+<Accordion title="How accurate is the search?">
+  AniDev search matches against:
+  - English titles
+  - Japanese titles (romaji)
+  - Alternative titles
+  - Synonyms
+  
+  This ensures you find anime even if you're not sure of the exact title.
+</Accordion>
+
+<Accordion title="Can I save my filter preferences?">
+  Filter preferences are saved in your browser session. When you navigate away and return to the search page, your last filters will be restored.
+</Accordion>
+
+<Accordion title="What's the difference between Music search and Anime search?">
+  **Anime search** finds anime series and movies. **Music search** specifically searches for opening and ending theme songs, allowing you to filter by OP (Opening) or ED (Ending).
+</Accordion>

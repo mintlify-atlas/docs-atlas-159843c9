@@ -1,0 +1,173 @@
+---
+title: 'Video Proxy'
+description: 'Stream video content through a proxy with range request support'
+---
+
+# Video Proxy
+
+Proxy endpoint for streaming video content with support for HLS playlists and range requests.
+
+## Endpoint
+
+```
+GET /api/videoProxy
+```
+
+## Authentication
+
+No authentication required.
+
+## Rate Limiting
+
+This endpoint is rate-limited. The default configuration allows:
+- **100 requests** per **60 seconds** per IP address
+
+When rate limit is exceeded, the API returns a `429 Too Many Requests` status with a `Retry-After` header.
+
+## Query Parameters
+
+<ParamField query="url" type="string" required>
+  The URL of the video resource to proxy. Supports both HLS playlist files (.m3u8) and video segments.
+</ParamField>
+
+## Request Headers
+
+<ParamField header="Range" type="string">
+  HTTP range header for partial content requests (e.g., `bytes=0-1023`). Enables video seeking and bandwidth optimization.
+</ParamField>
+
+## Response
+
+### Success Response
+
+**Status Code:** `200 OK` or `206 Partial Content` (when Range header is provided)
+
+**Headers:**
+
+<ResponseField name="Content-Type" type="string">
+  MIME type of the resource:
+  - `application/vnd.apple.mpegurl` for playlists
+  - `video/mp2t` or other video MIME types for segments
+</ResponseField>
+
+<ResponseField name="Cache-Control" type="string">
+  Caching policy:
+  - Playlists: `public, max-age=86400, s-maxage=86400` (24 hours)
+  - Video segments: `public, max-age=86400` (24 hours)
+</ResponseField>
+
+<ResponseField name="Accept-Ranges" type="string">
+  Always set to `bytes` to indicate support for range requests.
+</ResponseField>
+
+<ResponseField name="Content-Length" type="string">
+  Size of the response body in bytes.
+</ResponseField>
+
+<ResponseField name="Content-Range" type="string">
+  Present when responding to range requests. Format: `bytes <start>-<end>/<total>`
+</ResponseField>
+
+<ResponseField name="Expires" type="string">
+  Expiration date for playlist resources (24 hours from request).
+</ResponseField>
+
+**Body:**
+- For playlists: Modified M3U8 content with proxied URLs
+- For video segments: Binary video stream
+
+### Error Response
+
+**Status Code:** `400 Bad Request`, `404 Not Found`, `429 Too Many Requests`, or `500 Internal Server Error`
+
+<CodeGroup>
+```json Error Response
+{
+  "error": "Missing resource URL",
+  "status": 400
+}
+```
+</CodeGroup>
+
+## Examples
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://yourdomain.com/api/videoProxy?url=https://example.com/playlist.m3u8" \
+  -H "Range: bytes=0-1023"
+```
+
+```javascript JavaScript
+const videoUrl = 'https://example.com/video/playlist.m3u8';
+const response = await fetch(
+  `/api/videoProxy?url=${encodeURIComponent(videoUrl)}`,
+  {
+    headers: {
+      'Range': 'bytes=0-1023'
+    }
+  }
+);
+
+const blob = await response.blob();
+const videoObjectUrl = URL.createObjectURL(blob);
+```
+
+```python Python
+import requests
+
+video_url = 'https://example.com/video/playlist.m3u8'
+response = requests.get(
+    'https://yourdomain.com/api/videoProxy',
+    params={'url': video_url},
+    headers={'Range': 'bytes=0-1023'}
+)
+
+if response.status_code in [200, 206]:
+    video_data = response.content
+```
+</CodeGroup>
+
+## Usage in Video Players
+
+<CodeGroup>
+```javascript Video.js
+import videojs from 'video.js';
+
+const player = videojs('my-video', {
+  sources: [{
+    src: `/api/videoProxy?url=${encodeURIComponent(playlistUrl)}`,
+    type: 'application/x-mpegURL'
+  }]
+});
+```
+
+```html HTML5 Video
+<video controls>
+  <source 
+    src="/api/videoProxy?url=https://example.com/video.mp4" 
+    type="video/mp4"
+  >
+</video>
+```
+</CodeGroup>
+
+<Note>
+  The video proxy automatically handles HLS playlist manipulation, rewriting segment URLs to route through the proxy for seamless streaming.
+</Note>
+
+<Warning>
+  Ensure the source video URL is accessible from your server. CORS restrictions on the source server may affect proxy functionality.
+</Warning>
+
+## Features
+
+- **Range Request Support**: Enables video seeking and progressive loading
+- **HLS Playlist Processing**: Automatically rewrites playlist URLs
+- **Caching**: 24-hour cache for improved performance
+- **Stream Processing**: Efficient streaming without loading entire files into memory
+- **Error Handling**: Comprehensive error messages for debugging
+
+## Related Endpoints
+
+- [Image Proxy](/api/media/image-proxy) - Proxy and optimize images
+- [Upload Image](/api/media/upload-image) - Upload images to the platform

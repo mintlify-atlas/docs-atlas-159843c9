@@ -1,0 +1,251 @@
+---
+title: "useDynamicBorder"
+description: "Custom hook for creating interactive dynamic border effects that follow mouse movement"
+---
+
+# useDynamicBorder
+
+The `useDynamicBorder` hook creates an interactive dynamic border effect that follows the user's mouse movement, perfect for creating engaging hover effects on cards, buttons, or any interactive elements.
+
+## Type Signature
+
+```typescript
+function useDynamicBorder(options: {
+  borderWidth?: number
+  normalOpacity?: number
+  hoverOpacity?: number
+}): {
+  elementRef: RefObject<HTMLElement>
+  handleMouseMove: (e: MouseEvent) => void
+  handleMouseLeave: () => void
+  handleMouseEnter: () => void
+}
+```
+
+## Parameters
+
+<ParamField path="borderWidth" type="number" default="2">
+  Width of the dynamic border in pixels
+</ParamField>
+
+<ParamField path="normalOpacity" type="number" default="0.4">
+  Opacity of the border when not hovered (0 to 1)
+</ParamField>
+
+<ParamField path="hoverOpacity" type="number" default="0.9">
+  Opacity of the border when hovered (0 to 1)
+</ParamField>
+
+## Return Value
+
+<ResponseField name="elementRef" type="RefObject<HTMLElement>">
+  React ref to attach to the element that should have the dynamic border
+</ResponseField>
+
+<ResponseField name="handleMouseMove" type="(e: MouseEvent) => void">
+  Event handler for mouse movement over the element
+</ResponseField>
+
+<ResponseField name="handleMouseLeave" type="() => void">
+  Event handler for when mouse leaves the element
+</ResponseField>
+
+<ResponseField name="handleMouseEnter" type="() => void">
+  Event handler for when mouse enters the element
+</ResponseField>
+
+## Usage Examples
+
+### Basic Card Hover Effect
+
+```typescript
+import { useDynamicBorder } from '@hooks/useDynamicBorder'
+
+const AnimeCard = ({ anime }) => {
+  const { elementRef, handleMouseMove, handleMouseLeave, handleMouseEnter } =
+    useDynamicBorder({
+      borderWidth: 2,
+      normalOpacity: 0.4,
+      hoverOpacity: 0.9,
+    })
+
+  return (
+    <div
+      ref={elementRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      onMouseEnter={handleMouseEnter}
+      className="anime-card"
+    >
+      <img src={anime.image} alt={anime.title} />
+      <h3>{anime.title}</h3>
+    </div>
+  )
+}
+```
+
+### Subtle Button Effect
+
+```typescript
+const InteractiveButton = ({ children, onClick }) => {
+  const { elementRef, handleMouseMove, handleMouseLeave, handleMouseEnter } =
+    useDynamicBorder({
+      borderWidth: 1,
+      normalOpacity: 0.2,
+      hoverOpacity: 0.6,
+    })
+
+  return (
+    <button
+      ref={elementRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      onMouseEnter={handleMouseEnter}
+      onClick={onClick}
+      className="interactive-btn"
+    >
+      {children}
+    </button>
+  )
+}
+```
+
+### Gallery Item
+
+```typescript
+const GalleryItem = ({ image, title }) => {
+  const { elementRef, handleMouseMove, handleMouseLeave, handleMouseEnter } =
+    useDynamicBorder({
+      borderWidth: 3,
+      normalOpacity: 0.3,
+      hoverOpacity: 1.0,
+    })
+
+  return (
+    <figure
+      ref={elementRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      onMouseEnter={handleMouseEnter}
+      className="gallery-item"
+    >
+      <img src={image} alt={title} />
+      <figcaption>{title}</figcaption>
+    </figure>
+  )
+}
+```
+
+### Custom Styling Example
+
+```typescript
+const StyledCard = ({ content }) => {
+  const { elementRef, handleMouseMove, handleMouseLeave, handleMouseEnter } =
+    useDynamicBorder({
+      borderWidth: 2,
+      normalOpacity: 0.5,
+      hoverOpacity: 1.0,
+    })
+
+  return (
+    <div
+      ref={elementRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      onMouseEnter={handleMouseEnter}
+      className="relative overflow-hidden rounded-lg p-4"
+      style={{
+        border: '2px solid transparent',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      }}
+    >
+      {content}
+    </div>
+  )
+}
+```
+
+## Use Cases
+
+- **Anime cards** with interactive hover effects
+- **Navigation menu items** that respond to mouse position
+- **Feature cards** on landing pages
+- **Gallery items** with engaging interactions
+- **Interactive buttons** with visual feedback
+- **Profile cards** with dynamic borders
+- **Product showcases** in e-commerce interfaces
+
+## CSS Requirements
+
+<Note>
+  The dynamic border effect typically requires specific CSS to work properly. The element should have:
+  - `position: relative` or `position: absolute`
+  - A pseudo-element (`:before` or `:after`) for the border effect
+  - `overflow: hidden` to clip the border gradient
+</Note>
+
+Example CSS:
+
+```css
+.dynamic-border-element {
+  position: relative;
+  overflow: hidden;
+}
+
+.dynamic-border-element::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px; /* borderWidth */
+  background: linear-gradient(var(--border-angle), transparent, var(--accent-color));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: var(--border-opacity);
+  transition: opacity 0.3s ease;
+}
+```
+
+## How It Works
+
+1. **Ref Attachment**: The hook provides a ref that tracks the element's position
+2. **Mouse Tracking**: `handleMouseMove` calculates the mouse position relative to the element
+3. **Angle Calculation**: Computes the angle from element center to mouse position
+4. **CSS Variable Update**: Updates CSS custom properties for gradient rotation
+5. **Opacity Control**: Adjusts border visibility on hover/leave events
+
+<Tip>
+  Combine with Tailwind's group utilities for coordinated hover effects:
+  ```typescript
+  <div className="group" ref={elementRef} onMouseMove={handleMouseMove}>
+    <div className="group-hover:scale-105 transition-transform">
+      Content
+    </div>
+  </div>
+  ```
+</Tip>
+
+## Performance Considerations
+
+- The hook uses `requestAnimationFrame` for smooth animations
+- Mouse move events are throttled to prevent excessive re-renders
+- Border calculations are optimized using CSS custom properties
+- Effect cleanup prevents memory leaks on unmount
+
+<Note>
+  For optimal performance, avoid applying this effect to too many elements simultaneously. Consider using it on featured items or elements that are in the viewport.
+</Note>
+
+## Browser Compatibility
+
+The dynamic border effect uses modern CSS features:
+- CSS Custom Properties (CSS Variables)
+- CSS Gradients
+- CSS Masks (for border clipping)
+
+Supported in all modern browsers (Chrome, Firefox, Safari, Edge).
+
+## Source
+
+This hook is commonly used in anime card components and interactive UI elements throughout AniDev.

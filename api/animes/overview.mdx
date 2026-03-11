@@ -1,0 +1,123 @@
+---
+title: 'Anime API Overview'
+description: 'Overview of AniDev Anime API endpoints for fetching, searching, and managing anime data'
+---
+
+## Introduction
+
+The Anime API provides a comprehensive set of endpoints for accessing anime information, including detailed metadata, search functionality, and random anime discovery. All endpoints implement Redis caching for optimal performance and rate limiting to prevent abuse.
+
+## Base URL
+
+All API requests should be made to:
+
+```
+https://your-domain.com/api/animes
+```
+
+## Available Endpoints
+
+<CardGroup cols={2}>
+  <Card title="Get Animes (Full)" icon="list" href="/api/animes/get-animes">
+    Retrieve a filtered list of animes with comprehensive data
+  </Card>
+  <Card title="Get Anime Details" icon="circle-info" href="/api/animes/get-anime-details">
+    Get detailed information about a specific anime by ID
+  </Card>
+  <Card title="Random Anime" icon="shuffle" href="/api/animes/random-anime">
+    Fetch a random anime for discovery
+  </Card>
+</CardGroup>
+
+## Common Features
+
+### Rate Limiting
+
+All anime endpoints are protected by rate limiting middleware to prevent API abuse:
+- Default: 100 requests per 60 seconds
+- Exceeded limits return `429 Too Many Requests` with `Retry-After` header
+
+### Caching
+
+Endpoints implement Redis caching with the following strategies:
+- **GET /api/animes/full**: 2-hour cache (7200 seconds)
+- **GET /api/animes/getAnime**: 1-hour cache
+- **GET /api/animes/random**: No persistent caching (always fresh)
+
+### Response Format
+
+All endpoints follow a consistent response structure:
+
+```json
+{
+  "data": {
+    // Response data here
+  }
+}
+```
+
+### Error Handling
+
+Standardized error responses include:
+
+<ResponseField name="error" type="object">
+  Error information object
+  
+  <Expandable title="properties">
+    <ResponseField name="message" type="string">
+      Human-readable error message
+    </ResponseField>
+    <ResponseField name="type" type="string">
+      Error type (validation, notFound, permission, database)
+    </ResponseField>
+    <ResponseField name="statusCode" type="number">
+      HTTP status code
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Common Query Parameters
+
+Many endpoints support these common parameters:
+
+<ParamField query="parental_control" type="boolean" default="true">
+  Filter content based on parental control settings. Set to `false` to disable filtering.
+</ParamField>
+
+<ParamField query="limit_count" type="number" default="10">
+  Number of results to return per page
+</ParamField>
+
+<ParamField query="page_number" type="number" default="1">
+  Page number for pagination
+</ParamField>
+
+## Available Filters
+
+The API supports extensive filtering options:
+
+- **genre_filter**: Filter by anime genres (Action, Adventure, Comedy, etc.)
+- **type_filter**: Filter by anime type (TV, Movie, OVA, ONA, etc.)
+- **studio_filter**: Filter by animation studio
+- **score_filter**: Filter by minimum score
+- **status_filter**: Filter by airing status (Finished Airing, Currently Airing, etc.)
+- **year_filter**: Filter by release year
+- **rating_filter**: Filter by age rating (G, PG, PG-13, R, R+, Rx)
+- **season_filter**: Filter by season (Winter, Spring, Summer, Fall)
+- **aired_day_filter**: Filter by broadcast day
+- **order_by**: Sort results (score, score_asc, title, title_asc)
+
+## Authentication
+
+Anime API endpoints are **publicly accessible** and do not require authentication. However, rate limiting still applies based on IP address.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Get Animes" icon="arrow-right" href="/api/animes/get-animes">
+    Learn how to fetch filtered anime lists
+  </Card>
+  <Card title="Get Details" icon="arrow-right" href="/api/animes/get-anime-details">
+    Retrieve detailed anime information
+  </Card>
+</CardGroup>

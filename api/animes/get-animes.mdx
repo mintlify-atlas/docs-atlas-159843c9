@@ -1,0 +1,485 @@
+---
+title: 'GET /api/animes/full'
+description: 'Retrieve a filtered list of animes with comprehensive data and advanced filtering options'
+---
+
+## Endpoint
+
+```
+GET /api/animes/full
+```
+
+## Description
+
+Fetch a complete list of animes with extensive filtering capabilities. This endpoint returns comprehensive anime data including metadata, genres, studios, ratings, and more. Results are cached for 2 hours to optimize performance.
+
+## Authentication
+
+<Note>
+This endpoint is publicly accessible and does not require authentication.
+</Note>
+
+## Rate Limiting
+
+- **Limit**: 100 requests per 60 seconds per IP
+- **Headers**: Rate limit information included in response headers
+
+## Query Parameters
+
+### Filtering Parameters
+
+<ParamField query="genre_filter" type="string">
+  Filter by anime genres. Supports multiple values.
+  
+  **Available genres**: Action, Adventure, Avant Garde, Award Winning, Boys Love, Comedy, Drama, Ecchi, Erotica, Fantasy, Girls Love, Gourmet, Horror, Mystery, Romance, Sci-Fi, Slice of Life, Sports, Supernatural, Suspense
+  
+  **Example**: `genre_filter=Action,Adventure`
+</ParamField>
+
+<ParamField query="type_filter" type="string">
+  Filter by anime type.
+  
+  **Available types**: TV, Movie, OVA, ONA, Special, Music, CM, PV, TV Special
+  
+  **Example**: `type_filter=TV`
+</ParamField>
+
+<ParamField query="studio_filter" type="string">
+  Filter by animation studio name. Supports multiple studios.
+  
+  **Example**: `studio_filter=MAPPA,Ufotable`
+</ParamField>
+
+<ParamField query="score_filter" type="number">
+  Filter by minimum score (0-10).
+  
+  **Example**: `score_filter=8.5`
+</ParamField>
+
+<ParamField query="status_filter" type="string">
+  Filter by airing status.
+  
+  **Available statuses**: Finished Airing, Currently Airing, Not yet aired
+  
+  **Example**: `status_filter=Currently Airing`
+</ParamField>
+
+<ParamField query="year_filter" type="number">
+  Filter by release year.
+  
+  **Example**: `year_filter=2024`
+</ParamField>
+
+<ParamField query="rating_filter" type="string">
+  Filter by age rating.
+  
+  **Available ratings**: 
+  - `g - all ages` (E)
+  - `pg - children` (E10+)
+  - `pg-13 - teens 13 or older` (13+)
+  - `r - 17+ (violence & profanity)` (15+)
+  - `r+ - mild nudity` (17+)
+  - `rx+-+hentai` (18+)
+  
+  **Example**: `rating_filter=pg-13 - teens 13 or older`
+</ParamField>
+
+<ParamField query="season_filter" type="string">
+  Filter by anime season.
+  
+  **Available seasons**: Winter, Spring, Summer, Fall
+  
+  **Example**: `season_filter=Spring`
+</ParamField>
+
+<ParamField query="aired_day_filter" type="string">
+  Filter by broadcast day of the week.
+  
+  **Available days**: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday
+  
+  **Example**: `aired_day_filter=Saturday`
+</ParamField>
+
+<ParamField query="banners_filter" type="boolean">
+  Filter to only show animes with banner images.
+  
+  **Example**: `banners_filter=true`
+</ParamField>
+
+### Sorting Parameters
+
+<ParamField query="order_by" type="string">
+  Sort results by specified field.
+  
+  **Available options**:
+  - `score` - Sort by score (descending)
+  - `score_asc` - Sort by score (ascending)
+  - `title` - Sort by title (descending)
+  - `title_asc` - Sort by title (ascending)
+  
+  **Example**: `order_by=score`
+</ParamField>
+
+### Content Control
+
+<ParamField query="parental_control" type="boolean" default="true">
+  Apply parental control filtering to exclude mature content.
+  
+  **Example**: `parental_control=false`
+</ParamField>
+
+<ParamField query="search_query" type="string">
+  Search query to filter animes by title.
+  
+  **Example**: `search_query=attack on titan`
+</ParamField>
+
+## Response
+
+<ResponseField name="data" type="array">
+  Array of anime objects
+  
+  <Expandable title="Anime Object Properties">
+    <ResponseField name="mal_id" type="number" required>
+      MyAnimeList ID (unique identifier)
+    </ResponseField>
+    
+    <ResponseField name="title" type="string" required>
+      Primary anime title
+    </ResponseField>
+    
+    <ResponseField name="title_english" type="string">
+      English title
+    </ResponseField>
+    
+    <ResponseField name="title_japanese" type="string">
+      Japanese title
+    </ResponseField>
+    
+    <ResponseField name="title_synonyms" type="array">
+      Alternative titles and synonyms
+    </ResponseField>
+    
+    <ResponseField name="type" type="string">
+      Anime type (TV, Movie, OVA, etc.)
+    </ResponseField>
+    
+    <ResponseField name="source" type="string">
+      Source material (Manga, Light Novel, Original, etc.)
+    </ResponseField>
+    
+    <ResponseField name="episodes" type="number">
+      Total number of episodes
+    </ResponseField>
+    
+    <ResponseField name="status" type="string">
+      Airing status
+    </ResponseField>
+    
+    <ResponseField name="airing" type="boolean">
+      Whether the anime is currently airing
+    </ResponseField>
+    
+    <ResponseField name="aired_from" type="string">
+      Start date (ISO 8601 format)
+    </ResponseField>
+    
+    <ResponseField name="aired_to" type="string">
+      End date (ISO 8601 format)
+    </ResponseField>
+    
+    <ResponseField name="duration" type="string">
+      Episode duration
+    </ResponseField>
+    
+    <ResponseField name="rating" type="string">
+      Age rating
+    </ResponseField>
+    
+    <ResponseField name="score" type="number">
+      Average score (0-10)
+    </ResponseField>
+    
+    <ResponseField name="scored_by" type="number">
+      Number of users who scored the anime
+    </ResponseField>
+    
+    <ResponseField name="popularity" type="number">
+      Popularity rank
+    </ResponseField>
+    
+    <ResponseField name="members" type="number">
+      Number of members
+    </ResponseField>
+    
+    <ResponseField name="favorites" type="number">
+      Number of times favorited
+    </ResponseField>
+    
+    <ResponseField name="synopsis" type="string">
+      Anime description/synopsis
+    </ResponseField>
+    
+    <ResponseField name="background" type="string">
+      Background information
+    </ResponseField>
+    
+    <ResponseField name="season" type="string">
+      Anime season (Winter, Spring, Summer, Fall)
+    </ResponseField>
+    
+    <ResponseField name="year" type="number">
+      Release year
+    </ResponseField>
+    
+    <ResponseField name="broadcast_day" type="string">
+      Day of the week for broadcast
+    </ResponseField>
+    
+    <ResponseField name="broadcast_time" type="string">
+      Broadcast time
+    </ResponseField>
+    
+    <ResponseField name="broadcast_timezone" type="string">
+      Broadcast timezone
+    </ResponseField>
+    
+    <ResponseField name="image_url" type="string">
+      Main image URL
+    </ResponseField>
+    
+    <ResponseField name="image_webp" type="string">
+      WebP format image URL
+    </ResponseField>
+    
+    <ResponseField name="image_small_webp" type="string">
+      Small WebP format image URL
+    </ResponseField>
+    
+    <ResponseField name="image_large_webp" type="string">
+      Large WebP format image URL
+    </ResponseField>
+    
+    <ResponseField name="banner_image" type="string">
+      Banner image URL
+    </ResponseField>
+    
+    <ResponseField name="youtube_id" type="string">
+      YouTube video ID for trailer
+    </ResponseField>
+    
+    <ResponseField name="trailer_url" type="string">
+      Trailer URL
+    </ResponseField>
+    
+    <ResponseField name="trailer_embed_url" type="string">
+      Embeddable trailer URL
+    </ResponseField>
+    
+    <ResponseField name="trailer_image_url" type="string">
+      Trailer thumbnail image URL
+    </ResponseField>
+    
+    <ResponseField name="url" type="string">
+      MyAnimeList URL
+    </ResponseField>
+    
+    <ResponseField name="approved" type="boolean">
+      Whether the entry is approved on MAL
+    </ResponseField>
+    
+    <ResponseField name="genres" type="array">
+      Array of genre names
+    </ResponseField>
+    
+    <ResponseField name="studios" type="array">
+      Array of studio names
+    </ResponseField>
+    
+    <ResponseField name="producers" type="array">
+      Array of producer names
+    </ResponseField>
+    
+    <ResponseField name="licensors" type="array">
+      Array of licensor names
+    </ResponseField>
+    
+    <ResponseField name="themes" type="array">
+      Array of theme names
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+## Response Headers
+
+```
+Cache-Control: public, max-age=7200, s-maxage=7200
+Expires: <timestamp>
+Vary: Accept-Encoding
+```
+
+## Examples
+
+### Basic Request
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://your-domain.com/api/animes/full"
+```
+
+```javascript JavaScript
+const response = await fetch('https://your-domain.com/api/animes/full');
+const data = await response.json();
+console.log(data);
+```
+
+```python Python
+import requests
+
+response = requests.get('https://your-domain.com/api/animes/full')
+data = response.json()
+print(data)
+```
+</CodeGroup>
+
+### Filter by Genre and Type
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://your-domain.com/api/animes/full?genre_filter=Action,Adventure&type_filter=TV"
+```
+
+```javascript JavaScript
+const params = new URLSearchParams({
+  genre_filter: 'Action,Adventure',
+  type_filter: 'TV'
+});
+
+const response = await fetch(`https://your-domain.com/api/animes/full?${params}`);
+const data = await response.json();
+```
+</CodeGroup>
+
+### Filter by Score and Year
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://your-domain.com/api/animes/full?score_filter=8.0&year_filter=2024&order_by=score"
+```
+
+```javascript JavaScript
+const params = new URLSearchParams({
+  score_filter: '8.0',
+  year_filter: '2024',
+  order_by: 'score'
+});
+
+const response = await fetch(`https://your-domain.com/api/animes/full?${params}`);
+const data = await response.json();
+```
+</CodeGroup>
+
+### Search with Parental Control Disabled
+
+<CodeGroup>
+```bash cURL
+curl -X GET "https://your-domain.com/api/animes/full?search_query=demon&parental_control=false"
+```
+
+```javascript JavaScript
+const params = new URLSearchParams({
+  search_query: 'demon',
+  parental_control: 'false'
+});
+
+const response = await fetch(`https://your-domain.com/api/animes/full?${params}`);
+const data = await response.json();
+```
+</CodeGroup>
+
+## Response Example
+
+```json
+{
+  "data": [
+    {
+      "mal_id": 16498,
+      "title": "Shingeki no Kyojin",
+      "title_english": "Attack on Titan",
+      "title_japanese": "進撃の巨人",
+      "title_synonyms": ["AoT"],
+      "type": "TV",
+      "source": "Manga",
+      "episodes": 25,
+      "status": "Finished Airing",
+      "airing": false,
+      "aired_from": "2013-04-07T00:00:00.000Z",
+      "aired_to": "2013-09-29T00:00:00.000Z",
+      "duration": "24 min per ep",
+      "rating": "r - 17+ (violence & profanity)",
+      "score": 8.55,
+      "scored_by": 2500000,
+      "popularity": 1,
+      "members": 3500000,
+      "favorites": 180000,
+      "synopsis": "Centuries ago, mankind was slaughtered to near extinction by monstrous humanoid creatures called Titans...",
+      "background": "Shingeki no Kyojin adapts content from the first 8 volumes of the original manga...",
+      "season": "Spring",
+      "year": 2013,
+      "broadcast_day": "Sunday",
+      "broadcast_time": "01:58",
+      "broadcast_timezone": "Asia/Tokyo",
+      "image_url": "https://cdn.myanimelist.net/images/anime/10/47347.jpg",
+      "image_webp": "https://cdn.myanimelist.net/images/anime/10/47347.webp",
+      "image_small_webp": "https://cdn.myanimelist.net/images/anime/10/47347t.webp",
+      "image_large_webp": "https://cdn.myanimelist.net/images/anime/10/47347l.webp",
+      "banner_image": "https://example.com/banner.jpg",
+      "youtube_id": "MGRm4IzK1SQ",
+      "trailer_url": "https://www.youtube.com/watch?v=MGRm4IzK1SQ",
+      "trailer_embed_url": "https://www.youtube.com/embed/MGRm4IzK1SQ",
+      "trailer_image_url": "https://i.ytimg.com/vi/MGRm4IzK1SQ/maxresdefault.jpg",
+      "url": "https://myanimelist.net/anime/16498/Shingeki_no_Kyojin",
+      "approved": true,
+      "genres": ["Action", "Drama", "Fantasy", "Mystery"],
+      "studios": ["Wit Studio"],
+      "producers": ["Production I.G", "Dentsu", "Mainichi Broadcasting System"],
+      "licensors": ["Funimation"],
+      "themes": ["Military", "Survival"]
+    }
+  ]
+}
+```
+
+## Error Responses
+
+### Rate Limit Exceeded (429)
+
+```json
+{
+  "error": {
+    "message": "Too many requests. Please try again later.",
+    "type": "rate_limit",
+    "statusCode": 429
+  }
+}
+```
+
+### Internal Server Error (500)
+
+```json
+{
+  "error": {
+    "message": "Failed to fetch animes",
+    "type": "database",
+    "statusCode": 500
+  }
+}
+```
+
+<Note>
+**Performance Tip**: This endpoint implements aggressive caching. Results are cached for 2 hours with both browser and CDN caching enabled.
+</Note>
+
+<Warning>
+When using multiple filters, ensure values are properly URL-encoded, especially for filters with special characters or spaces.
+</Warning>

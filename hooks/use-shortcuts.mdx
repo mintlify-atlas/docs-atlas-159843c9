@@ -1,0 +1,290 @@
+---
+title: "useShortcuts"
+description: "Custom hook for managing keyboard shortcuts with support for key combinations"
+---
+
+# useShortcuts
+
+The `useShortcuts` hook manages keyboard shortcuts throughout your application, supporting complex key combinations including modifier keys (Ctrl, Shift, Alt) and providing a clean API for mapping shortcuts to actions.
+
+## Type Signature
+
+```typescript
+type Shortcut = { keys: string[]; action: string }
+type ActionMap = Record<string, () => void>
+
+function useShortcuts(
+  shortcuts: Shortcut[],
+  actionMap: ActionMap
+): void
+```
+
+## Parameters
+
+<ParamField path="shortcuts" type="Shortcut[]" required>
+  Array of shortcut definitions, each containing:
+  - `keys`: Array of key names (e.g., `['ctrl', 's']`)
+  - `action`: String identifier for the action to trigger
+</ParamField>
+
+<ParamField path="actionMap" type="ActionMap" required>
+  Object mapping action identifiers to callback functions that execute when shortcuts are triggered
+</ParamField>
+
+## Return Value
+
+This hook doesn't return any value. It sets up global keyboard event listeners that trigger the mapped actions.
+
+## Usage Examples
+
+### Basic Save Shortcut
+
+```typescript
+import { useShortcuts } from '@hooks/useShortcuts'
+
+const Editor = () => {
+  const handleSave = () => {
+    console.log('Saving document...')
+    saveDocument()
+  }
+
+  useShortcuts(
+    [{ keys: ['ctrl', 's'], action: 'save' }],
+    { save: handleSave }
+  )
+
+  return <textarea placeholder="Start typing..." />
+}
+```
+
+### Multiple Shortcuts
+
+```typescript
+const VideoPlayer = () => {
+  const handlePlay = () => togglePlayPause()
+  const handleFullscreen = () => toggleFullscreen()
+  const handleMute = () => toggleMute()
+
+  useShortcuts(
+    [
+      { keys: ['space'], action: 'play' },
+      { keys: ['f'], action: 'fullscreen' },
+      { keys: ['m'], action: 'mute' },
+    ],
+    {
+      play: handlePlay,
+      fullscreen: handleFullscreen,
+      mute: handleMute,
+    }
+  )
+
+  return <video src="anime-episode.mp4" />
+}
+```
+
+### Navigation Shortcuts
+
+```typescript
+const AnimeGallery = () => {
+  const [currentIndex, setCurrentIndex] = useState(0)
+
+  useShortcuts(
+    [
+      { keys: ['arrowleft'], action: 'prev' },
+      { keys: ['arrowright'], action: 'next' },
+      { keys: ['escape'], action: 'close' },
+    ],
+    {
+      prev: () => setCurrentIndex((i) => Math.max(0, i - 1)),
+      next: () => setCurrentIndex((i) => i + 1),
+      close: () => navigate('/'),
+    }
+  )
+
+  return <ImageViewer index={currentIndex} />
+}
+```
+
+### Complex Modifier Combinations
+
+```typescript
+const AdvancedEditor = () => {
+  useShortcuts(
+    [
+      { keys: ['ctrl', 's'], action: 'save' },
+      { keys: ['ctrl', 'shift', 's'], action: 'saveAs' },
+      { keys: ['ctrl', 'z'], action: 'undo' },
+      { keys: ['ctrl', 'shift', 'z'], action: 'redo' },
+      { keys: ['ctrl', 'b'], action: 'bold' },
+      { keys: ['ctrl', 'i'], action: 'italic' },
+    ],
+    {
+      save: () => saveDocument(),
+      saveAs: () => openSaveDialog(),
+      undo: () => undoLastAction(),
+      redo: () => redoLastAction(),
+      bold: () => toggleBold(),
+      italic: () => toggleItalic(),
+    }
+  )
+
+  return <RichTextEditor />
+}
+```
+
+### Search Shortcut
+
+```typescript
+const AnimeSearch = () => {
+  const searchInputRef = useRef<HTMLInputElement>(null)
+
+  useShortcuts(
+    [
+      { keys: ['ctrl', 'k'], action: 'focusSearch' },
+      { keys: ['escape'], action: 'clearSearch' },
+    ],
+    {
+      focusSearch: () => searchInputRef.current?.focus(),
+      clearSearch: () => {
+        if (searchInputRef.current) {
+          searchInputRef.current.value = ''
+          searchInputRef.current.blur()
+        }
+      },
+    }
+  )
+
+  return <input ref={searchInputRef} type="search" placeholder="Search anime..." />
+}
+```
+
+### Modal Control
+
+```typescript
+const ModalWithShortcuts = ({ isOpen, onClose, children }) => {
+  useShortcuts(
+    [{ keys: ['escape'], action: 'close' }],
+    { close: onClose }
+  )
+
+  if (!isOpen) return null
+
+  return (
+    <div className="modal">
+      <div className="modal-content">
+        {children}
+        <button onClick={onClose}>Close (Esc)</button>
+      </div>
+    </div>
+  )
+}
+```
+
+## Supported Keys
+
+### Modifier Keys
+- `ctrl` - Control key (Cmd on Mac)
+- `shift` - Shift key
+- `alt` - Alt key (Option on Mac)
+
+### Special Keys
+- `escape` - Escape key
+- `enter` - Enter/Return key
+- `space` - Spacebar
+- `arrowup`, `arrowdown`, `arrowleft`, `arrowright` - Arrow keys
+- `tab` - Tab key
+- `backspace` - Backspace key
+- `delete` - Delete key
+
+### Character Keys
+- Any letter: `a`, `b`, `c`, etc. (automatically lowercased)
+- Numbers: `0`, `1`, `2`, etc.
+- Function keys: `f1`, `f2`, `f3`, etc.
+
+<Note>
+  All key names are automatically converted to lowercase for consistent matching. Use lowercase in your shortcut definitions.
+</Note>
+
+## Use Cases
+
+- **Video player controls** - Play/pause, volume, fullscreen
+- **Image galleries** - Navigation, zoom, close
+- **Text editors** - Save, undo/redo, formatting
+- **Search interfaces** - Focus search, clear input
+- **Modal dialogs** - Close with Escape
+- **Application navigation** - Quick access to different sections
+- **Accessibility** - Keyboard-only navigation support
+
+## How It Works
+
+1. **Event Registration**: The hook sets up a global `keydown` event listener on `window`
+2. **Key Combination**: When a key is pressed, it builds a combination string like `ctrl+s`
+3. **Action Lookup**: It looks up the combination in the shortcuts map
+4. **Prevention**: If a match is found, it prevents the default browser behavior
+5. **Execution**: It executes the corresponding action from the action map
+6. **Cleanup**: Event listeners are removed when the component unmounts
+
+<Tip>
+  Always prevent default browser behavior for common shortcuts like `Ctrl+S` to avoid conflicts with browser save functionality.
+</Tip>
+
+## Best Practices
+
+### Document Your Shortcuts
+
+```typescript
+const KeyboardHelp = () => (
+  <div className="keyboard-shortcuts">
+    <h3>Keyboard Shortcuts</h3>
+    <ul>
+      <li><kbd>Ctrl</kbd> + <kbd>S</kbd> - Save</li>
+      <li><kbd>Ctrl</kbd> + <kbd>K</kbd> - Search</li>
+      <li><kbd>Esc</kbd> - Close</li>
+    </ul>
+  </div>
+)
+```
+
+### Conditional Shortcuts
+
+```typescript
+const ConditionalShortcuts = ({ isEditMode }) => {
+  useShortcuts(
+    isEditMode
+      ? [{ keys: ['ctrl', 's'], action: 'save' }]
+      : [],
+    { save: handleSave }
+  )
+}
+```
+
+### Avoid Conflicts
+
+<Note>
+  Be careful not to override critical browser shortcuts:
+  - `Ctrl+T` (new tab)
+  - `Ctrl+W` (close tab)
+  - `Ctrl+N` (new window)
+  - `Ctrl+Tab` (switch tabs)
+</Note>
+
+## Accessibility Considerations
+
+- Always provide visible indicators for keyboard shortcuts
+- Ensure shortcuts don't conflict with screen reader commands
+- Test with keyboard-only navigation
+- Document all shortcuts in your help documentation
+- Consider providing customizable shortcuts for power users
+
+<Tip>
+  Combine with tooltip components to show keyboard shortcuts in your UI:
+  ```typescript
+  <Tooltip content="Save (Ctrl+S)">
+    <button onClick={handleSave}>Save</button>
+  </Tooltip>
+  ```
+</Tip>
+
+## Source
+
+Location: `src/domains/shared/hooks/useShortCuts.ts:6`

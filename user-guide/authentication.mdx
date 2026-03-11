@@ -1,0 +1,185 @@
+---
+title: Authentication
+description: Learn how to sign up, sign in, and manage your AniDev account securely
+icon: shield-check
+---
+
+## Overview
+
+AniDev provides multiple authentication methods to access the platform. You can create an account using your email and password or sign in quickly with Google OAuth.
+
+## Sign Up
+
+Creating a new AniDev account is a multi-step process that helps personalize your anime experience from the start.
+
+<Steps>
+  <Step title="Create Your Account">
+    Navigate to the sign-up page at `/signup` and provide the following information:
+    
+    - **Username**: Minimum 3 characters
+    - **Email**: Valid email address
+    - **Password**: Must meet security requirements
+    
+    <Warning>
+      Your password must:
+      - Be at least 6 characters long
+      - Contain at least one lowercase letter
+      - Contain at least one uppercase letter
+      - Contain at least one number
+      - Contain at least one symbol (!@#$%^&*)
+      - Not exceed 20 characters
+    </Warning>
+  </Step>
+
+  <Step title="Complete Your Profile">
+    After account creation, you'll be prompted to complete your profile:
+    
+    - Upload a profile picture (avatar)
+    - Enter your first name and last name
+    - Select your birthday
+    - Choose your gender (Male, Female, or Other)
+  </Step>
+
+  <Step title="Set Your Preferences">
+    Tell AniDev about your anime preferences:
+    
+    - **Favorite Animes**: Select from popular titles like One Piece, Naruto, Attack on Titan, and more
+    - **Watch Frequency**: How often you watch anime (Daily, Weekly, Monthly, Occasionally, Rarely)
+    - **Fanatic Level**: From Casual Viewer to Hardcore Otaku
+    - **Preferred Format**: TV Series, Movies, OVA, ONA, Specials, or No preference
+    - **Watched Animes**: Track what you've already seen
+    - **Favorite Studios**: Select from Studio Ghibli, Mappa, ufotable, and more
+    - **Favorite Genres**: Action, Adventure, Romance, Sci-Fi, and many others
+  </Step>
+</Steps>
+
+### Password Requirements Reference
+
+The sign-up system validates passwords using Zod schema validation defined in `src/domains/auth/schemas/signup.ts`:
+
+```typescript
+password: z
+  .string()
+  .min(6, 'The password must be at least 6 characters long')
+  .regex(/(?=.*[a-z])/, 'Must contain at least one lowercase letter')
+  .regex(/(?=.*[A-Z])/, 'Must contain at least one uppercase letter')
+  .regex(/(?=.*\d)/, 'Must contain at least one number')
+  .regex(/(?=.*[!@#$%^&*])/, 'Must contain at least one symbol')
+  .max(20, 'The password cannot exceed 20 characters')
+```
+
+## Sign In
+
+Returning users can sign in using their email and password or Google account.
+
+<Steps>
+  <Step title="Navigate to Sign In">
+    Go to `/signin` to access the login page.
+  </Step>
+
+  <Step title="Enter Credentials">
+    Provide your registered email and password. The same password validation rules apply.
+  </Step>
+
+  <Step title="Submit">
+    Click the "Sign In" button. Upon successful authentication, you'll be redirected to the homepage.
+  </Step>
+</Steps>
+
+## Google OAuth
+
+For faster access, you can authenticate using your Google account.
+
+<Note>
+  When signing in with Google, AniDev automatically:
+  - Creates a Supabase user account if one doesn't exist
+  - Stores your Google profile name and avatar
+  - Generates a secure session token
+  - Adds your profile to the `public_users` table
+</Note>
+
+### How Google Auth Works
+
+The authentication flow is configured in `auth.config.js`:
+
+1. Click the "Sign in with Google" button on either sign-up or sign-in pages
+2. Google prompts you to select an account and grant permissions (openid, email, profile)
+3. AniDev receives your Google profile information
+4. The system checks if a user with your email already exists
+5. If new, creates both a Supabase auth user and a public profile entry
+6. Generates a magic link token for session management
+7. You're automatically signed in and redirected
+
+## Authentication Security
+
+<Warning>
+  AniDev implements multiple security measures:
+  - **Rate Limiting**: Login endpoints are protected against brute-force attacks
+  - **Secure Sessions**: Uses Supabase Auth with PKCE flow
+  - **Token Management**: Session tokens are securely stored and validated
+  - **API Protection**: Authenticated endpoints use the `checkSession` middleware
+</Warning>
+
+### Rate Limiting
+
+Both `/api/auth/signup` and `/api/auth/signin` endpoints implement rate limiting to prevent abuse:
+
+```typescript
+export const POST: APIRoute = rateLimit(
+  async ({ request, cookies }) => {
+    // Handler logic
+  },
+  { points: 100, duration: 60 }
+)
+```
+
+## Session Management
+
+Once authenticated, your session is managed through:
+
+- **Session Tokens**: Stored in secure cookies
+- **Supabase Access Token**: Generated via magic link for API requests
+- **User Profile Sync**: Session includes your latest profile data from `public_users` table
+
+You can check your current session status at `/api/auth/session`.
+
+## Troubleshooting
+
+<Accordion title="I forgot my password">
+  Currently, AniDev uses Supabase Auth for password management. Contact support or use the password reset feature in Supabase if implemented.
+</Accordion>
+
+<Accordion title="Google sign-in isn't working">
+  Ensure you:
+  - Have pop-ups enabled in your browser
+  - Are using a valid Google account
+  - Have granted the required permissions (openid, email, profile)
+  - Check your network connection
+</Accordion>
+
+<Accordion title="My session keeps expiring">
+  Sessions are managed by Supabase Auth. If you're experiencing frequent logouts:
+  - Clear your browser cookies and cache
+  - Ensure cookies are enabled
+  - Try signing in again
+</Accordion>
+
+<Accordion title="Password validation errors">
+  Double-check that your password meets all requirements:
+  - 6-20 characters
+  - At least one lowercase letter (a-z)
+  - At least one uppercase letter (A-Z)
+  - At least one number (0-9)
+  - At least one special character (!@#$%^&*)
+</Accordion>
+
+## API Reference
+
+Authentication endpoints:
+
+- `POST /api/auth/signup` - Register a new user
+- `POST /api/auth/signin` - Authenticate existing user
+- `GET /api/auth/session` - Get current session information
+- `GET /api/auth/callback` - OAuth callback handler (used by Google auth)
+
+See [API Reference](/api-reference/authentication) for detailed endpoint documentation.

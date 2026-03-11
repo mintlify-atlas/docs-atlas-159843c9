@@ -1,0 +1,280 @@
+---
+title: 'Upload Image'
+description: 'Upload and process images with automatic optimization'
+---
+
+# Upload Image
+
+Upload images to the platform with automatic optimization and storage. Supports both regular images and banner images.
+
+## Endpoint
+
+```
+POST /api/uploadImage
+```
+
+## Authentication
+
+<Warning>
+  **Authentication Required**
+  
+  This endpoint requires a valid user session. Include session cookies with your request.
+</Warning>
+
+## Request Body
+
+<ParamField body="image" type="string" required>
+  Base64-encoded image data or image URL.
+</ParamField>
+
+<ParamField body="filename" type="string" required>
+  Name of the file to be uploaded (including extension).
+  
+  Example: `"profile-avatar.jpg"`, `"banner-image.png"`
+</ParamField>
+
+<ParamField body="isBanner" type="boolean" default={false}>
+  Whether this image is a banner image.
+  - `true`: Image will be processed as a banner (wider aspect ratio)
+  - `false`: Image will be processed as a regular image (e.g., avatar)
+</ParamField>
+
+## Response
+
+### Success Response
+
+**Status Code:** `200 OK`
+
+<ResponseField name="success" type="boolean">
+  Always `true` for successful requests.
+</ResponseField>
+
+<ResponseField name="data" type="string">
+  The URL of the uploaded image. This URL can be used to access the image.
+</ResponseField>
+
+<CodeGroup>
+```json Success Response
+{
+  "success": true,
+  "data": "https://coffee-advanced-tern-335.mypinata.cloud/ipfs/QmX7Zd..."
+}
+```
+</CodeGroup>
+
+### Error Response
+
+**Status Code:** `401 Unauthorized`, `400 Bad Request`, or `500 Internal Server Error`
+
+<CodeGroup>
+```json Unauthorized
+{
+  "error": "Unauthorized",
+  "status": 401
+}
+```
+
+```json Missing Image
+{
+  "error": "Missing image data",
+  "status": 400
+}
+```
+</CodeGroup>
+
+## Examples
+
+<CodeGroup>
+```javascript JavaScript (File Upload)
+async function uploadImage(file, isBanner = false) {
+  // Convert file to base64
+  const reader = new FileReader();
+  const base64Promise = new Promise((resolve) => {
+    reader.onloadend = () => resolve(reader.result);
+    reader.readAsDataURL(file);
+  });
+  
+  const base64Image = await base64Promise;
+  
+  const response = await fetch('/api/uploadImage', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include', // Include session cookies
+    body: JSON.stringify({
+      image: base64Image,
+      filename: file.name,
+      isBanner: isBanner
+    })
+  });
+  
+  const result = await response.json();
+  return result.data; // Image URL
+}
+
+// Usage
+const fileInput = document.querySelector('input[type="file"]');
+const file = fileInput.files[0];
+const imageUrl = await uploadImage(file, false);
+console.log('Uploaded image URL:', imageUrl);
+```
+
+```javascript React Hook
+import { useState } from 'react';
+
+function useImageUpload() {
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState(null);
+  
+  const uploadImage = async (file, isBanner = false) => {
+    setUploading(true);
+    setError(null);
+    
+    try {
+      const reader = new FileReader();
+      const base64 = await new Promise((resolve, reject) => {
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      
+      const response = await fetch('/api/uploadImage', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          image: base64,
+          filename: file.name,
+          isBanner
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+      
+      const data = await response.json();
+      return data.data;
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setUploading(false);
+    }
+  };
+  
+  return { uploadImage, uploading, error };
+}
+
+// Usage in component
+function ProfileUpload() {
+  const { uploadImage, uploading, error } = useImageUpload();
+  
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const url = await uploadImage(file, false);
+      console.log('Image uploaded:', url);
+    }
+  };
+  
+  return (
+    <div>
+      <input type="file" onChange={handleFileChange} disabled={uploading} />
+      {uploading && <p>Uploading...</p>}
+      {error && <p>Error: {error}</p>}
+    </div>
+  );
+}
+```
+
+```bash cURL
+curl -X POST "https://yourdomain.com/api/uploadImage" \
+  -H "Content-Type: application/json" \
+  -b cookies.txt \
+  -d '{
+    "image": "data:image/jpeg;base64,/9j/4AAQSkZJRg...",
+    "filename": "profile.jpg",
+    "isBanner": false
+  }'
+```
+
+```python Python
+import requests
+import base64
+
+def upload_image(file_path, filename, is_banner=False, session_cookies=None):
+    # Read and encode image
+    with open(file_path, 'rb') as f:
+        image_data = base64.b64encode(f.read()).decode('utf-8')
+    
+    # Add data URI prefix
+    mime_type = 'image/jpeg'  # Adjust based on your file
+    base64_image = f'data:{mime_type};base64,{image_data}'
+    
+    response = requests.post(
+        'https://yourdomain.com/api/uploadImage',
+        json={
+            'image': base64_image,
+            'filename': filename,
+            'isBanner': is_banner
+        },
+        cookies=session_cookies
+    )
+    
+    if response.status_code == 200:
+        return response.json()['data']
+    else:
+        raise Exception(f'Upload failed: {response.text}')
+
+# Usage
+image_url = upload_image(
+    file_path='./avatar.jpg',
+    filename='avatar.jpg',
+    is_banner=False,
+    session_cookies={'session': 'your-session-token'}
+)
+print(f'Uploaded to: {image_url}')
+```
+</CodeGroup>
+
+## Image Processing
+
+Uploaded images are automatically processed:
+
+1. **Format Conversion**: Images may be converted to optimized formats (WebP/AVIF)
+2. **Optimization**: File size is reduced while maintaining visual quality
+3. **Storage**: Images are stored on IPFS via Pinata for permanent, decentralized storage
+4. **CDN Distribution**: Uploaded images are served through Pinata's CDN for fast global access
+
+## File Size Limits
+
+<Warning>
+  While the API doesn't enforce a hard file size limit, extremely large images may cause timeout issues. Recommended maximum file size is **10MB**.
+  
+  For better performance, resize images client-side before uploading.
+</Warning>
+
+## Security Considerations
+
+- **Authentication Required**: Only authenticated users can upload images
+- **Session Validation**: User session is verified on every request
+- **File Type Validation**: Server validates image data before processing
+- **IPFS Storage**: Images are stored on decentralized IPFS network
+
+<Note>
+  Uploaded images are publicly accessible via their IPFS URLs. Do not upload sensitive or private images through this endpoint.
+</Note>
+
+## Common Use Cases
+
+- **Profile Avatars**: Upload user profile pictures
+- **Banner Images**: Upload wide banner/cover images for profiles
+- **Content Images**: Upload images for user-generated content
+- **Gallery Images**: Build image galleries with uploaded content
+
+## Related Endpoints
+
+- [Image Proxy](/api/media/image-proxy) - Optimize and proxy images
+- [User Preferences](/api/user/preferences) - Save user preferences including image URLs

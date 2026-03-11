@@ -1,0 +1,343 @@
+---
+title: Collections
+description: Organize and manage your anime lists across multiple categories
+icon: folder-open
+---
+
+## Overview
+
+AniDev's collection system helps you organize your anime watching experience. Track what you're watching, what you've completed, and what you plan to watch next.
+
+## Collection Types
+
+AniDev provides four distinct collection categories to organize your anime library:
+
+<CardGroup cols={2}>
+  <Card title="To Watch" icon="clock">
+    Plan your future viewing with a curated list of animes you want to watch.
+  </Card>
+  
+  <Card title="Collection" icon="bookmark">
+    Your main anime collection - a comprehensive list of animes you're tracking.
+  </Card>
+  
+  <Card title="Completed" icon="circle-check">
+    Track animes you've finished watching from start to end.
+  </Card>
+  
+  <Card title="Watching" icon="play">
+    Currently watching animes with active progress tracking.
+  </Card>
+</CardGroup>
+
+Each collection type is represented by its own icon and can be accessed from your profile dashboard.
+
+## Managing Your Lists
+
+The collection system is powered by a Zustand store that manages list state across the application.
+
+### List Structure
+
+**Store**: `src/domains/user/stores/user-list-store.ts`
+
+```typescript
+userList: [
+  { label: 'To Watch', icon: ToWatchIcon, selected: true },
+  { label: 'Collection', icon: CollectionIcon, selected: false },
+  { label: 'Completed', icon: CompletedIcon, selected: false },
+  { label: 'Watching', icon: WatchingIcon, selected: false },
+]
+```
+
+### Switching Between Lists
+
+<Steps>
+  <Step title="Navigate to Your Profile">
+    Go to `/profile` to access your anime dashboard.
+  </Step>
+
+  <Step title="Select a Collection Tab">
+    Click on any of the four collection tabs:
+    - **To Watch**: Animes on your watchlist
+    - **Collection**: Your main anime library
+    - **Completed**: Finished animes
+    - **Watching**: Currently active animes
+  </Step>
+
+  <Step title="View Collection Contents">
+    The selected collection displays all animes in that category with:
+    - Anime cover art
+    - Title
+    - Quick action buttons
+    - Progress information (for Watching list)
+  </Step>
+</Steps>
+
+## Adding Anime to Collections
+
+Add animes to your collections from anywhere in the app.
+
+<Steps>
+  <Step title="Find an Anime">
+    Browse animes from:
+    - Homepage recommendations
+    - Search results at `/search`
+    - Anime detail pages at `/anime/[slug]`
+    - Schedule calendar at `/schedule`
+  </Step>
+
+  <Step title="Select Collection Type">
+    Click the collection button on the anime card or detail page. Choose which list to add it to:
+    - To Watch
+    - Collection
+    - Completed
+    - Watching
+  </Step>
+
+  <Step title="Confirmation">
+    You'll receive a toast notification confirming the anime was added to your selected collection.
+  </Step>
+</Steps>
+
+### Add to Watch List API
+
+**Service**: `src/domains/user/services/watch-list.ts`
+
+```typescript
+export const addToWatchList = async (
+  userId: string,
+  animeId: number,
+  type: string
+): Promise<ApiResponse<any>> => {
+  // Adds anime to user's watch list with specified type
+  const data = await UserRepository.upsertWatchListItem(userId, animeId, type)
+  return { data }
+}
+```
+
+The `type` parameter determines which collection the anime is added to:
+- `"to_watch"` - To Watch list
+- `"collection"` - Main Collection
+- `"completed"` - Completed list
+- `"watching"` - Currently Watching
+
+## Removing Anime from Collections
+
+Remove animes you're no longer interested in tracking.
+
+<Steps>
+  <Step title="Navigate to Collection">
+    Go to your profile and select the collection containing the anime you want to remove.
+  </Step>
+
+  <Step title="Remove Anime">
+    Click the remove or delete button on the anime card. Confirm the removal when prompted.
+  </Step>
+
+  <Step title="Confirmation">
+    The anime is immediately removed from your collection and the UI updates to reflect the change.
+  </Step>
+</Steps>
+
+### Remove from Watch List API
+
+**Service**: `src/domains/user/services/watch-list.ts`
+
+```typescript
+export const removeFromWatchList = async (
+  userId: string,
+  animeId: number
+): Promise<ApiResponse<any>> => {
+  // Removes anime from all watch lists
+  const data = await UserRepository.removeFromWatchList(userId, animeId)
+  return { data }
+}
+```
+
+<Warning>
+  Removing an anime from your watch list removes it from ALL collection types. If you want to move an anime between collections, add it to the new collection type instead of removing it.
+</Warning>
+
+## Progress Tracking
+
+For animes in your "Watching" collection, AniDev tracks your viewing progress.
+
+### Episode Progress
+
+When watching an anime episode:
+
+1. Progress is automatically saved as you watch
+2. Visual progress bars show how much you've completed
+3. Resume from where you left off on your next visit
+4. Track progress across multiple devices (requires sign-in)
+
+### Watch History
+
+Your watch history includes:
+- Recently watched episodes
+- Completion timestamps
+- Total watch time statistics
+- Episode markers for quick resuming
+
+<Note>
+  Progress tracking is tied to your user account and syncs across devices when signed in.
+</Note>
+
+## Collection Dashboard
+
+Your profile page at `/profile` serves as your collection dashboard.
+
+### Dashboard Features
+
+**User List Component**: `src/domains/user/components/user-dashboard/user-list.tsx`
+
+The dashboard displays:
+- Collection tabs for easy switching
+- Anime cards with cover art
+- Quick action buttons
+- Loading states while fetching data
+- Empty states when collections are empty
+- Filter and sort options
+
+### Empty State
+
+When a collection is empty, you'll see:
+- A friendly message explaining the collection is empty
+- Suggestions to browse and add animes
+- Quick links to search and discover new animes
+
+**Component**: `src/domains/user/components/user-dashboard/empty-state.tsx`
+
+### Loading State
+
+While collections are loading:
+- Skeleton loaders display placeholder cards
+- Smooth loading animations
+- Prevents layout shift
+
+**Component**: `src/domains/user/components/user-dashboard/loading-state.tsx`
+
+## State Management
+
+Collections use multiple stores for efficient state management:
+
+### User List Store
+
+**Store**: `src/domains/user/stores/user-list-store.ts`
+
+```typescript
+interface UserListsStore {
+  userList: Section[]      // Array of collection sections
+  isLoading: boolean       // Loading state
+  setUserList: (userList: Section[]) => void
+  setIsLoading: (isLoading: boolean) => void
+}
+```
+
+### Global User Store
+
+**Store**: `src/domains/user/stores/user-store.ts`
+
+```typescript
+interface GlobalUserPreferences {
+  watchList: WatchList[]   // Current watch list items
+  setWatchList: (watchList: WatchList[]) => void
+  // Other user preferences...
+}
+```
+
+## Collection Access Routes
+
+Access your collections through these routes:
+
+- `/profile` - Main profile dashboard with all collections
+- `/collection/[slug]` - Individual collection pages
+- `/watch/[slug]` - Watch anime with progress tracking
+
+## List Synchronization
+
+Your collections automatically sync:
+
+<Steps>
+  <Step title="On Sign In">
+    When you sign in, all your collections are loaded from the database and synchronized with the local state.
+  </Step>
+
+  <Step title="On Updates">
+    Whenever you add or remove an anime, the change is:
+    - Immediately saved to the database
+    - Reflected in the UI without page refresh
+    - Synced across all open tabs
+  </Step>
+
+  <Step title="Cross-Device">
+    Collections sync across devices:
+    - Sign in on any device to access your lists
+    - Changes on one device appear on others
+    - Consistent experience across web and mobile
+  </Step>
+</Steps>
+
+## Advanced Features
+
+### Bulk Operations
+
+Manage multiple animes at once:
+- Mark multiple animes as completed
+- Move animes between collections
+- Remove multiple animes from a list
+
+### Collection Export
+
+Export your collections for backup or sharing:
+- Export as JSON format
+- Import collections from backup files
+- Share collection links with friends
+
+<Note>
+  Collection export/import features may require additional development. Check the latest feature availability in your AniDev instance.
+</Note>
+
+## Troubleshooting
+
+<Accordion title="Animes aren't appearing in my collection">
+  Try these steps:
+  - Refresh the page to reload collection data
+  - Verify you're signed in to your account
+  - Check that the anime was successfully added (look for confirmation toast)
+  - Clear browser cache and try again
+</Accordion>
+
+<Accordion title="Progress isn't saving">
+  Ensure:
+  - You're signed in (progress requires authentication)
+  - The anime is in your "Watching" collection
+  - You have a stable internet connection
+  - Browser cookies are enabled
+</Accordion>
+
+<Accordion title="Collections are loading slowly">
+  Large collections may take time to load. To improve performance:
+  - Use the filter and sort features to narrow results
+  - Consider organizing animes across multiple collection types
+  - Check your internet connection speed
+</Accordion>
+
+<Accordion title="Can't remove an anime from collection">
+  If removal fails:
+  - Verify you're signed in
+  - Check you have permission to modify the collection
+  - Try refreshing the page and attempting again
+  - Check browser console for error messages
+</Accordion>
+
+## API Reference
+
+Collection management endpoints:
+
+- `POST /api/user/watchlist/add` - Add anime to watch list
+- `DELETE /api/user/watchlist/remove` - Remove anime from watch list
+- `GET /api/user/watchlist` - Get all watch list items
+- `PUT /api/user/watchlist/update` - Update watch list item type
+
+See [API Reference](/api-reference/collections) for detailed endpoint documentation.

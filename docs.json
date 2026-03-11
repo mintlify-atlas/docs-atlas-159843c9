@@ -1,122 +1,138 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
-  "name": "Mint Starter Kit",
+  "name": "AniDev",
+  "theme": "palm",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#3f6fea",
+    "light": "#b1c4f4",
+    "dark": "#3f6fea"
   },
-  "favicon": "/favicon.svg",
+  "favicon": "https://media.brand.dev/67091ef0-568b-451e-aba8-a673f7fc3f41.png",
+  "logo": {
+    "light": "https://media.brand.dev/67091ef0-568b-451e-aba8-a673f7fc3f41.png",
+    "dark": "https://media.brand.dev/67091ef0-568b-451e-aba8-a673f7fc3f41.png"
+  },
+  "navbar": {
+    "primary": {
+      "type": "github",
+      "href": "https://github.com/Sebas200702/AniDev"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/Sebas200702/AniDev"
+    }
+  },
   "navigation": {
     "tabs": [
       {
-        "tab": "Guides",
+        "tab": "Documentation",
         "groups": [
           {
-            "group": "Getting started",
+            "group": "Get Started",
             "pages": [
-              "index",
+              "introduction",
               "quickstart",
-              "development"
+              "installation"
             ]
           },
           {
-            "group": "Customization",
+            "group": "Core Features",
             "pages": [
-              "essentials/settings",
-              "essentials/navigation"
+              "features/anime-streaming",
+              "features/search-discovery",
+              "features/user-collections",
+              "features/progress-tracking",
+              "features/schedule-system"
             ]
           },
           {
-            "group": "Writing content",
+            "group": "User Guide",
             "pages": [
-              "essentials/markdown",
-              "essentials/code",
-              "essentials/images",
-              "essentials/reusable-snippets"
+              "user-guide/authentication",
+              "user-guide/profile-management",
+              "user-guide/collections",
+              "user-guide/preferences"
             ]
           },
           {
-            "group": "AI tools",
+            "group": "Development",
             "pages": [
-              "ai-tools/cursor",
-              "ai-tools/claude-code",
-              "ai-tools/windsurf"
+              "development/architecture",
+              "development/tech-stack",
+              "development/project-structure",
+              "development/testing"
             ]
           }
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "API Reference",
         "groups": [
           {
-            "group": "API documentation",
+            "group": "Anime",
             "pages": [
-              "api-reference/introduction"
+              "api/animes/overview",
+              "api/animes/get-animes",
+              "api/animes/get-anime-details",
+              "api/animes/random-anime"
             ]
           },
           {
-            "group": "Endpoint examples",
+            "group": "Episodes",
             "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
+              "api/episodes/list-episodes",
+              "api/episodes/get-episode"
+            ]
+          },
+          {
+            "group": "Authentication",
+            "pages": [
+              "api/auth/signup",
+              "api/auth/signin"
+            ]
+          },
+          {
+            "group": "Media",
+            "pages": [
+              "api/media/video-proxy",
+              "api/media/image-proxy",
+              "api/media/upload-image"
+            ]
+          },
+          {
+            "group": "User",
+            "pages": [
+              "api/user/preferences",
+              "api/user/collections"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Hooks & Components",
+        "groups": [
+          {
+            "group": "Custom Hooks",
+            "pages": [
+              "hooks/use-fetch",
+              "hooks/use-debounce",
+              "hooks/use-dynamic-border",
+              "hooks/use-shortcuts",
+              "hooks/use-carousel-scroll",
+              "hooks/use-url-sync",
+              "hooks/use-drag-and-drop"
+            ]
+          },
+          {
+            "group": "Middleware",
+            "pages": [
+              "middleware/rate-limiting",
+              "middleware/authentication"
             ]
           }
         ]
       }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
-    }
-  },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
-  },
-  "navbar": {
-    "links": [
-      {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
-      }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://dashboard.mintlify.com"
-    }
-  },
-  "contextual": {
-    "options": [
-     "copy",
-     "view",
-     "chatgpt",
-     "claude",
-     "perplexity",
-     "mcp",
-     "cursor",
-     "vscode"
-   ]
-  },
-  "footer": {
-    "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
-    }
+    ]
   }
 }

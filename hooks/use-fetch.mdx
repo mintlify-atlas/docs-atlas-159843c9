@@ -1,0 +1,225 @@
+---
+title: "useFetch"
+description: "Custom hook for simplified asynchronous HTTP requests with automatic loading and error handling"
+---
+
+# useFetch
+
+The `useFetch` hook simplifies making asynchronous HTTP requests with built-in state management for loading, error handling, and data. It integrates with AniDev's API service and provides automatic navigation for error states.
+
+## Type Signature
+
+```typescript
+function useFetch<T>({
+  url,
+  options,
+  skip,
+  onSuccess,
+  onError,
+  navigate404,
+  navigate403,
+}: UseFetchOptions<T>): {
+  data: T | null
+  status: number | null
+  error: Error | null
+  loading: boolean
+  meta: Record<string, any> | null
+  total: number
+  refetch: () => Promise<void>
+}
+```
+
+## Parameters
+
+<ParamField path="url" type="string" required>
+  The API endpoint URL to fetch data from
+</ParamField>
+
+<ParamField path="options" type="RequestInit">
+  Optional fetch configuration options (headers, method, body, etc.)
+</ParamField>
+
+<ParamField path="skip" type="boolean" default="false">
+  When `true`, the hook will not execute the fetch request
+</ParamField>
+
+<ParamField path="onSuccess" type="(data: T) => void">
+  Callback function executed when the request succeeds
+</ParamField>
+
+<ParamField path="onError" type="(error: Error) => void">
+  Callback function executed when the request fails
+</ParamField>
+
+<ParamField path="navigate404" type="boolean" default="false">
+  Automatically navigate to `/404` page when receiving a 404 response
+</ParamField>
+
+<ParamField path="navigate403" type="boolean" default="false">
+  Handle 403 forbidden responses (useful for parental controls)
+</ParamField>
+
+## Return Value
+
+<ResponseField name="data" type="T | null">
+  The fetched data of type T, or null if not yet loaded or on error
+</ResponseField>
+
+<ResponseField name="status" type="number | null">
+  The HTTP status code of the response
+</ResponseField>
+
+<ResponseField name="error" type="Error | null">
+  Error object if the request failed, null otherwise
+</ResponseField>
+
+<ResponseField name="loading" type="boolean">
+  True while the request is in progress
+</ResponseField>
+
+<ResponseField name="meta" type="Record<string, any> | null">
+  Additional metadata from the API response
+</ResponseField>
+
+<ResponseField name="total" type="number">
+  Total number of items (extracted from meta.total_items)
+</ResponseField>
+
+<ResponseField name="refetch" type="() => Promise<void>">
+  Function to manually trigger a new fetch request
+</ResponseField>
+
+## Usage Examples
+
+### Basic Fetching
+
+```typescript
+import { useFetch } from '@hooks/useFetch'
+import type { Anime } from '@anime/types'
+
+const AnimeList = () => {
+  const { data, error, loading } = useFetch<Anime[]>({
+    url: '/api/animes/full?type_filter=tv',
+  })
+
+  if (loading) return <div>Loading...</div>
+  if (error) return <div>Error: {error.message}</div>
+  
+  return (
+    <ul>
+      {data?.map(anime => (
+        <li key={anime.mal_id}>{anime.title}</li>
+      ))}
+    </ul>
+  )
+}
+```
+
+### With Callbacks and Auto-Navigation
+
+```typescript
+const AnimeDetails = ({ animeId }: { animeId: number }) => {
+  const { data, loading, refetch } = useFetch<Anime>({
+    url: `/api/animes/getAnime?mal_id=${animeId}`,
+    navigate404: true, // Auto-redirect to 404 if anime not found
+    onSuccess: (anime) => {
+      console.log('Loaded anime:', anime.title)
+    },
+    onError: (error) => {
+      console.error('Failed to load anime:', error)
+    },
+  })
+
+  return (
+    <div>
+      {loading ? (
+        <Skeleton />
+      ) : (
+        <>
+          <h1>{data?.title}</h1>
+          <button onClick={refetch}>Refresh</button>
+        </>
+      )}
+    </div>
+  )
+}
+```
+
+### Conditional Fetching
+
+```typescript
+const UserProfile = ({ userId }: { userId: string | null }) => {
+  const { data, loading } = useFetch<UserProfile>({
+    url: `/api/user/${userId}`,
+    skip: !userId, // Only fetch when userId is available
+  })
+
+  if (!userId) return <div>Please log in</div>
+  if (loading) return <div>Loading profile...</div>
+  
+  return <ProfileCard user={data} />
+}
+```
+
+### Pagination Example
+
+```typescript
+const PaginatedAnimeList = () => {
+  const [page, setPage] = useState(1)
+  
+  const { data, loading, total, meta } = useFetch<Anime[]>({
+    url: `/api/animes?page=${page}&limit=20`,
+  })
+
+  const totalPages = Math.ceil(total / 20)
+
+  return (
+    <div>
+      <AnimeGrid animes={data} loading={loading} />
+      <Pagination 
+        currentPage={page} 
+        totalPages={totalPages}
+        onPageChange={setPage}
+      />
+    </div>
+  )
+}
+```
+
+## Use Cases
+
+- **Fetching anime lists** with filtering and pagination
+- **Loading anime details** with automatic 404 handling
+- **Search functionality** with debounced queries
+- **User data** with authentication checks (403 handling)
+- **Episode information** for video playback
+- **Studio and genre data** for filtering interfaces
+
+## Error Handling
+
+The hook automatically maps HTTP status codes to appropriate error types:
+
+- **400**: Validation error
+- **401**: Unauthorized error
+- **403**: Permission error (useful for parental controls)
+- **404**: Not found error
+- **429**: Rate limit error
+- **Other**: Network error
+
+<Note>
+  The hook uses AniDev's custom `AppError` class for structured error handling, providing consistent error messages across the application.
+</Note>
+
+## Dependencies
+
+- `@libs/api` - AniDev's API client service
+- `@shared/errors` - Custom error handling utilities
+- `astro:transitions/client` - For programmatic navigation
+
+<Tip>
+  Use the `skip` parameter to implement conditional fetching based on user state, authentication, or form validation.
+</Tip>
+
+## Source
+
+Location: `src/domains/shared/hooks/useFetch.ts:16`

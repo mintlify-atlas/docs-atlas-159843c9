@@ -1,0 +1,391 @@
+---
+title: "System Architecture"
+description: "Learn about AniDev's domain-driven architecture, layered design patterns, and how the system is organized for scalability and maintainability"
+---
+
+## Overview
+
+AniDev follows a **domain-driven design (DDD)** architecture, organizing code into bounded contexts (domains) with clear separation of concerns. The system uses a layered architecture pattern with distinct responsibilities at each layer.
+
+## Architectural Layers
+
+The application is structured in four primary layers:
+
+```
+┌─────────────────────────────────────┐
+│     Presentation Layer              │
+│  (Components, Pages, Layouts)       │
+└─────────────────────────────────────┘
+           ↓
+┌─────────────────────────────────────┐
+│     Controller Layer                │
+│  (Request Handling, Validation)     │
+└─────────────────────────────────────┘
+           ↓
+┌─────────────────────────────────────┐
+│     Service Layer                   │
+│  (Business Logic, Orchestration)    │
+└─────────────────────────────────────┘
+           ↓
+┌─────────────────────────────────────┐
+│     Repository Layer                │
+│  (Data Access, Persistence)         │
+└─────────────────────────────────────┘
+```
+
+### Layer Responsibilities
+
+<CardGroup cols={2}>
+  <Card title="Controllers" icon="code">
+    Handle HTTP requests, validate input, coordinate service calls, and format responses
+  </Card>
+  <Card title="Services" icon="gears">
+    Contain business logic, orchestrate operations, handle domain-specific rules
+  </Card>
+  <Card title="Repositories" icon="database">
+    Abstract data access, interact with Supabase, handle database operations
+  </Card>
+  <Card title="Components" icon="window">
+    Present UI, handle user interactions, consume domain hooks and stores
+  </Card>
+</CardGroup>
+
+## Domain-Driven Structure
+
+### Core Domains
+
+Each domain is a self-contained module with its own components, services, repositories, stores, and types:
+
+```plaintext
+src/domains/
+├── anime/           # Anime browsing and details
+├── artist/          # Music artists and creators
+├── auth/            # Authentication and authorization
+├── cache/           # Caching strategies
+├── character/       # Anime characters
+├── collection/      # User collections
+├── download/        # Download management
+├── music/           # Music themes and soundtracks
+├── recommendations/ # AI-powered recommendations
+├── schedule/        # Anime release schedules
+├── search/          # Advanced search functionality
+├── seiyuu/          # Voice actors
+├── shared/          # Shared utilities and components
+├── user/            # User profiles and preferences
+└── watch/           # Video playback
+```
+
+### Domain Internal Structure
+
+Each domain follows a consistent internal structure:
+
+```plaintext
+domain/
+├── components/      # Domain-specific UI components
+├── controllers/     # Request handlers and validators
+├── hooks/          # Custom React hooks
+├── repositories/   # Data access layer
+├── services/       # Business logic
+├── stores/         # State management (Zustand)
+├── styles/         # Domain-specific styles
+├── types/          # TypeScript type definitions
+└── utils/          # Domain utility functions
+```
+
+## Example: Anime Domain Architecture
+
+Here's how the layers work together in the Anime domain:
+
+<CodeGroup>
+```typescript src/domains/anime/controllers/index.ts
+import { AnimeService } from '@anime/services'
+import { CacheService } from '@cache/services'
+import { AppError } from '@shared/errors'
+
+export const AnimeController = {
+  async handleGetAnimeById(url: URL) {
+    const id = url.searchParams.get('id')
+    const animeId = this.validateNumericId(id)
+    
+    const cacheKey = CacheService.generateKey(
+      'anime-by-id',
+      url.searchParams.toString()
+    )
+
+    const result = await getCachedOrFetch(
+      cacheKey,
+      () => AnimeService.getById(animeId, parentalControl)
+    )
+
+    return { data: result }
+  },
+
+  validateNumericId(id: string | null): number {
+    if (!id) throw AppError.validation('ID is required')
+    const idResult = Number.parseInt(id)
+    if (Number.isNaN(idResult) || idResult <= 0) {
+      throw AppError.validation('Invalid anime ID')
+    }
+    return idResult
+  }
+}
+```
+
+```typescript src/domains/anime/services/index.ts
+import { AnimeRepository } from '@anime/repositories'
+import { AppError } from '@shared/errors'
+
+export const AnimeService = {
+  async getById(
+    animeId: number,
+    parentalControl: boolean = true
+  ): Promise<Anime | null> {
+    try {
+      const result = await AnimeRepository.getById(
+        animeId,
+        parentalControl
+      )
+      
+      if (!result) {
+        throw AppError.notFound('Anime not found')
+      }
+
+      return result
+    } catch (error: unknown) {
+      if (isAppError(error) && error.type === 'permission') {
+        throw AppError.permission(
+          'Anime restricted by parental control'
+        )
+      }
+      throw error
+    }
+  }
+}
+```
+
+```typescript src/domains/anime/repositories/index.ts
+import { supabase } from '@libs/supabase'
+import { AppError } from '@shared/errors'
+
+export const AnimeRepository = {
+  async getById(
+    animeId: number,
+    parentalControl: boolean = false
+  ) {
+    const { data, error } = await supabase.rpc(
+      'get_anime_by_id',
+      {
+        p_mal_id: animeId,
+        p_parental_control: parentalControl,
+      }
+    )
+
+    if (error) {
+      throw AppError.database(
+        `Failed to fetch anime ${animeId}`,
+        { ...error }
+      )
+    }
+
+    if (!data || data.length === 0) {
+      throw AppError.notFound(
+        `Anime with ID ${animeId} not found`
+      )
+    }
+
+    return data[0] as Anime
+  }
+}
+```
+</CodeGroup>
+
+## Cross-Cutting Concerns
+
+### Error Handling
+
+Centralized error handling using typed error factory:
+
+```typescript src/domains/shared/errors/index.ts
+export const AppError = {
+  validation: (msg: string, ctx?: Record<string, unknown>) =>
+    createError('validation', msg, ctx),
+  notFound: (msg: string, ctx?: Record<string, unknown>) =>
+    createError('notFound', msg, ctx),
+  permission: (msg: string, ctx?: Record<string, unknown>) =>
+    createError('permission', msg, ctx),
+  database: (msg: string, ctx?: Record<string, unknown>) =>
+    createError('database', msg, ctx),
+  // ... more error types
+}
+```
+
+Each error type includes:
+- HTTP status code
+- Error type classification
+- Operational flag (recoverable vs programming error)
+- Context metadata
+- Timestamp
+
+### Caching Strategy
+
+Multi-layer caching for performance:
+
+```typescript src/domains/cache/services/index.ts
+export const CacheService = {
+  async get<T>(key: string): Promise<T | null> {
+    const isActive = await ensureRedisConnection()
+    if (!isActive) throw new Error('Redis unavailable')
+    
+    const result = await cacheRepository.get(key)
+    return result ? JSON.parse(result) : null
+  },
+
+  generateKey(
+    prefix: string,
+    identifier: string | Record<string, any>
+  ): string {
+    if (typeof identifier === 'string') {
+      return `${prefix}:${identifier}`
+    }
+    // Hash object for deterministic cache keys
+    const hash = createHash('sha256')
+      .update(JSON.stringify(identifier))
+      .digest('hex')
+    return `${prefix}:${hash}`
+  }
+}
+```
+
+### State Management
+
+Zustand stores for client-side state:
+
+```typescript src/domains/user/stores/user-list-store.ts
+import { create } from 'zustand'
+
+interface UserListsStore {
+  userList: Section[]
+  isLoading: boolean
+  setUserList: (userList: Section[]) => void
+  setIsLoading: (isLoading: boolean) => void
+}
+
+export const useUserListsStore = create<UserListsStore>(
+  (set) => ({
+    isLoading: false,
+    userList: [
+      { label: 'To Watch', icon: ToWatchIcon, selected: true },
+      { label: 'Collection', icon: CollectionIcon, selected: false },
+      { label: 'Completed', icon: CompletedIcon, selected: false },
+      { label: 'Watching', icon: WatchingIcon, selected: false },
+    ],
+    setUserList: (userList) => set({ userList }),
+    setIsLoading: (isLoading) => set({ isLoading }),
+  })
+)
+```
+
+## Middleware Architecture
+
+API endpoints use composable middleware for security and performance:
+
+<Tabs>
+  <Tab title="Rate Limiting">
+    ```typescript src/middlewares/rate-limit.ts
+    export const rateLimit = (
+      handler: (context: APIContext) => Promise<Response>,
+      options?: { points?: number; duration?: number }
+    ) => {
+      const limiter = new RateLimiterMemory({
+        points: options?.points ?? 100,
+        duration: options?.duration ?? 60,
+      })
+
+      return async (context: APIContext) => {
+        const ip = context.clientAddress
+        const rateLimitResult = await limiter.consume(ip)
+
+        const response = await handler(context)
+        
+        // Add rate limit headers
+        headers.set('X-RateLimit-Limit', limiter.points.toString())
+        headers.set(
+          'X-RateLimit-Remaining',
+          rateLimitResult.remainingPoints.toString()
+        )
+
+        return new Response(response.body, { status, headers })
+      }
+    }
+    ```
+  </Tab>
+
+  <Tab title="Authentication">
+    ```typescript src/middlewares/auth.ts
+    export const checkSession = (
+      handler: (context: APIContext) => Promise<Response>
+    ) => {
+      return async (context: APIContext) => {
+        const userInfo = await getSessionUserInfo({
+          request: context.request,
+          cookies: context.cookies,
+        })
+        
+        if (!userInfo) {
+          return new Response(
+            JSON.stringify({ error: 'Unauthorized' }),
+            { status: 401 }
+          )
+        }
+        
+        context.locals.userInfo = userInfo
+        return handler(context)
+      }
+    }
+    ```
+  </Tab>
+</Tabs>
+
+## Path Aliases
+
+TypeScript path aliases provide clean imports:
+
+```json tsconfig.json
+{
+  "compilerOptions": {
+    "baseUrl": "src",
+    "paths": {
+      "@anime/*": ["domains/anime/*"],
+      "@auth/*": ["domains/auth/*"],
+      "@cache/*": ["domains/cache/*"],
+      "@character/*": ["domains/character/*"],
+      "@shared/*": ["domains/shared/*"],
+      "@user/*": ["domains/user/*"],
+      "@libs/*": ["libs/*"],
+      "@utils/*": ["utils/*"],
+      "@middlewares/*": ["middlewares/*"]
+    }
+  }
+}
+```
+
+## Design Principles
+
+<CardGroup cols={2}>
+  <Card title="Separation of Concerns" icon="layer-group">
+    Each layer has distinct responsibilities with minimal overlap
+  </Card>
+  <Card title="Dependency Inversion" icon="arrows-turn-to-dots">
+    Upper layers depend on interfaces, not concrete implementations
+  </Card>
+  <Card title="Single Responsibility" icon="bullseye">
+    Each module handles one aspect of functionality
+  </Card>
+  <Card title="Open/Closed Principle" icon="shield-halved">
+    Open for extension, closed for modification
+  </Card>
+</CardGroup>
+
+<Note>
+  The domain-driven architecture makes it easy to add new features by creating new domains without affecting existing code. Each domain is independently testable and maintainable.
+</Note>

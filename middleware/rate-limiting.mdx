@@ -1,0 +1,299 @@
+---
+title: 'Rate Limiting Middleware'
+description: 'Protect your API endpoints from abuse with configurable rate limiting'
+icon: 'shield-halved'
+---
+
+# Rate Limiting Middleware
+
+The `rateLimit` middleware prevents API abuse by limiting the number of requests a client can make within a specific time window. It uses an in-memory rate limiter that tracks requests by IP address and returns appropriate rate limit headers with each response.
+
+## Installation
+
+Import the middleware from `@middlewares/rate-limit` and wrap your API handler:
+
+```typescript
+import { rateLimit } from '@middlewares/rate-limit'
+import type { APIRoute } from 'astro'
+
+export const GET: APIRoute = rateLimit(async (context) => {
+  // Your API handler logic
+  return new Response(JSON.stringify({ data: 'Success' }), { status: 200 })
+})
+```
+
+## TypeScript Signature
+
+```typescript
+const rateLimit: (
+  handler: (context: APIContext) => Promise<Response>,
+  options?: { points?: number; duration?: number }
+) => (context: APIContext) => Promise<Response>
+```
+
+<ParamField path="handler" type="Function" required>
+  The API route handler function to be rate-limited. Receives an `APIContext` and returns a `Promise<Response>`.
+</ParamField>
+
+<ParamField path="options" type="Object">
+  Optional configuration for the rate limiter.
+  
+  <ParamField path="options.points" type="number" default="100">
+    Number of requests allowed within the duration window.
+  </ParamField>
+  
+  <ParamField path="options.duration" type="number" default="60">
+    Time window in seconds during which the points are counted.
+  </ParamField>
+</ParamField>
+
+## Configuration
+
+### Default Configuration
+
+If no options are provided, the middleware uses a default rate limiter:
+
+- **Points**: 1000 requests
+- **Duration**: 60 seconds (1 minute)
+
+### Custom Configuration
+
+You can customize the rate limits per endpoint:
+
+<CodeGroup>
+
+```typescript Strict Limits
+import { rateLimit } from '@middlewares/rate-limit'
+
+// Allow only 10 requests per 60 seconds
+export const POST = rateLimit(
+  async ({ request }) => {
+    // Handle expensive operation
+  },
+  { points: 10, duration: 60 }
+)
+```
+
+```typescript Relaxed Limits
+import { rateLimit } from '@middlewares/rate-limit'
+
+// Allow 200 requests per 30 seconds
+export const GET = rateLimit(
+  async ({ url }) => {
+    // Handle read operation
+  },
+  { points: 200, duration: 30 }
+)
+```
+
+</CodeGroup>
+
+## Example Usage
+
+### Basic Rate Limiting
+
+```typescript title="src/pages/api/animes/random.ts"
+import { AnimeController } from '@anime/controllers'
+import { rateLimit } from '@middlewares/rate-limit'
+import { ResponseBuilder } from '@utils/response-builder'
+import type { APIRoute } from 'astro'
+
+export const GET: APIRoute = rateLimit(async ({ url }) => {
+  try {
+    const result = await AnimeController.handleGetRandomAnime(url)
+    return ResponseBuilder.success(result)
+  } catch (error) {
+    return ResponseBuilder.fromError(error, 'GET /api/animes/random')
+  }
+})
+```
+
+### Combined with Other Middlewares
+
+Rate limiting can be combined with other middlewares like Redis connection:
+
+```typescript title="src/pages/api/animes/full.ts"
+import { AnimeController } from '@anime/controllers'
+import { rateLimit } from '@middlewares/rate-limit'
+import { redisConnection } from '@middlewares/redis-connection'
+import { ResponseBuilder } from '@utils/response-builder'
+import type { APIRoute } from 'astro'
+
+export const GET: APIRoute = rateLimit(
+  redisConnection(async ({ url }) => {
+    try {
+      const data = await AnimeController.handleGetAnimesFull(url)
+      return ResponseBuilder.success(
+        { data },
+        {
+          headers: {
+            'Cache-Control': 'public, max-age=7200, s-maxage=7200',
+            Expires: new Date(Date.now() + 7200 * 1000).toUTCString(),
+            Vary: 'Accept-Encoding',
+          },
+        }
+      )
+    } catch (error) {
+      return ResponseBuilder.fromError(error, 'GET /api/animes/full')
+    }
+  })
+)
+```
+
+<Note>
+When combining middlewares, apply `rateLimit` as the outermost wrapper to ensure rate limiting happens before any other processing.
+</Note>
+
+## Response Headers
+
+The middleware automatically adds rate limit headers to successful responses:
+
+| Header | Description | Example |
+|--------|-------------|----------|
+| `X-RateLimit-Limit` | Maximum number of requests allowed | `100` |
+| `X-RateLimit-Remaining` | Number of requests remaining in current window | `87` |
+| `X-RateLimit-Reset` | Seconds until the rate limit resets | `45` |
+
+### Example Response
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 87
+X-RateLimit-Reset: 45
+
+{"data": "Success"}
+```
+
+## Error Handling
+
+### Rate Limit Exceeded (429)
+
+When a client exceeds their rate limit, the middleware returns:
+
+```json
+{
+  "error": "Too many requests",
+  "retryAfter": 45
+}
+```
+
+**Response Headers:**
+
+```http
+HTTP/1.1 429 Too Many Requests
+Content-Type: application/json
+Retry-After: 45
+```
+
+<ParamField path="error" type="string">
+  Error message indicating too many requests.
+</ParamField>
+
+<ParamField path="retryAfter" type="number">
+  Number of seconds the client should wait before making another request.
+</ParamField>
+
+<Warning>
+Clients should respect the `Retry-After` header to avoid being blocked. Implement exponential backoff in your client applications.
+</Warning>
+
+### Internal Server Error (500)
+
+If the rate limiter encounters an unexpected error:
+
+```json
+{
+  "error": "Internal server error"
+}
+```
+
+```http
+HTTP/1.1 500 Internal Server Error
+Content-Type: application/json
+```
+
+## How It Works
+
+1. **IP Tracking**: The middleware extracts the client's IP address from `context.clientAddress`
+2. **Point Consumption**: Each request consumes one point from the client's quota
+3. **Header Injection**: Rate limit headers are added to the response
+4. **Limit Enforcement**: When points are exhausted, returns 429 with retry information
+
+### Rate Limiter Strategy
+
+The middleware uses `rate-limiter-flexible` with an in-memory storage strategy:
+
+- **Algorithm**: Token bucket
+- **Granularity**: Per IP address
+- **Storage**: In-memory (RateLimiterMemory)
+- **Reset**: Automatic after duration window expires
+
+<Note>
+Since the rate limiter uses in-memory storage, limits are per-instance. In a distributed environment, consider using `RateLimiterRedis` for shared rate limiting across multiple servers.
+</Note>
+
+## Best Practices
+
+### Choose Appropriate Limits
+
+<CodeGroup>
+
+```typescript Public Endpoints
+// Higher limits for public read operations
+export const GET = rateLimit(
+  async (context) => { /* ... */ },
+  { points: 200, duration: 60 }
+)
+```
+
+```typescript Write Operations
+// Stricter limits for write operations
+export const POST = rateLimit(
+  async (context) => { /* ... */ },
+  { points: 20, duration: 60 }
+)
+```
+
+```typescript Expensive Operations
+// Very strict limits for computationally expensive tasks
+export const POST = rateLimit(
+  async (context) => { /* ... */ },
+  { points: 5, duration: 300 }
+)
+```
+
+</CodeGroup>
+
+### Informative Client Handling
+
+Always check rate limit headers on the client side:
+
+```typescript
+const response = await fetch('/api/animes/random')
+
+const remaining = response.headers.get('X-RateLimit-Remaining')
+const reset = response.headers.get('X-RateLimit-Reset')
+
+if (response.status === 429) {
+  const data = await response.json()
+  console.log(`Rate limited. Retry after ${data.retryAfter} seconds`)
+  // Implement retry logic with exponential backoff
+}
+```
+
+### Security Considerations
+
+<Warning>
+**IP Spoofing**: Be aware that `clientAddress` can potentially be spoofed in certain network configurations. Consider using additional authentication for sensitive endpoints.
+</Warning>
+
+<Note>
+**Reverse Proxy**: If running behind a reverse proxy (nginx, Cloudflare), ensure the real client IP is properly forwarded through headers like `X-Forwarded-For`.
+</Note>
+
+## Related
+
+- [Authentication Middleware](/middleware/authentication) - Protect endpoints with session validation
+- [API Endpoints](/api-reference/animes) - View all available API endpoints

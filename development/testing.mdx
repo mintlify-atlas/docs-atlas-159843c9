@@ -1,0 +1,573 @@
+---
+title: 'Testing Strategy'
+description: 'Learn how to write and run tests in AniDev using Vitest for unit and integration testing'
+---
+
+## Overview
+
+AniDev uses **Vitest** as its testing framework, providing fast, Vite-native testing for both unit and integration tests. The testing strategy focuses on critical business logic, API endpoints, and service layers.
+
+## Testing Setup
+
+### Running Tests
+
+```bash
+# Run all tests
+pnpm test
+
+# Run tests in watch mode
+pnpm test --watch
+
+# Run specific test file
+pnpm test src/domains/shared/test/metadata-service.test.ts
+
+# Run with coverage
+pnpm test --coverage
+```
+
+### Configuration
+
+Vitest configuration is defined in `package.json`:
+
+```json package.json
+{
+  "scripts": {
+    "test": "vitest"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.3"
+  }
+}
+```
+
+Vitest automatically uses Vite's configuration from `astro.config.mjs`, including:
+- TypeScript path aliases
+- Module resolution
+- Environment variables
+
+## Test Structure
+
+### Test File Organization
+
+```plaintext
+src/
+├── domains/
+│   └── shared/
+│       └── test/
+│           └── metadata-service.test.ts
+└── {other-domains}/
+    └── test/
+        └── {feature}.test.ts
+```
+
+**Naming Convention:** `{feature}.test.ts` or `{feature}.spec.ts`
+
+### Basic Test Example
+
+```typescript src/domains/shared/test/metadata-service.test.ts
+import { createContextLogger } from '@libs/pino'
+import { MetadataService } from '@shared/services/metadata-service'
+
+const logger = createContextLogger('MetadataServiceTest')
+
+async function testMetadataService() {
+  logger.info('🧪 Testing MetadataService...\n')
+
+  // Test 1: Anime Metadata
+  logger.info('1️⃣ Testing Anime Metadata (ID: 21 - One Piece)')
+  try {
+    const animeMetadata = await MetadataService.getAnimeMetadata(21)
+    logger.info('✅ Success:', {
+      title: animeMetadata.title.substring(0, 50) + '...',
+      hasDescription: !!animeMetadata.description,
+      hasImage: !!animeMetadata.image,
+    })
+  } catch (error) {
+    console.error('❌ Error:', error)
+  }
+
+  // Test 2: Music Metadata
+  logger.info('2️⃣ Testing Music Metadata (Theme ID: 123)')
+  try {
+    const musicMetadata = await MetadataService.getMusicMetadata(123)
+    logger.info('✅ Success:', {
+      title: musicMetadata.title,
+      hasDescription: !!musicMetadata.description,
+      hasImage: !!musicMetadata.image,
+    })
+  } catch (error) {
+    console.error('❌ Error (expected if theme does not exist):', error)
+  }
+
+  logger.info('\n✨ Tests completed!')
+}
+
+export { testMetadataService }
+```
+
+## Testing Patterns
+
+### 1. Service Layer Testing
+
+Test business logic and error handling:
+
+<CodeGroup>
+```typescript anime-service.test.ts
+import { describe, it, expect, vi } from 'vitest'
+import { AnimeService } from '@anime/services'
+import { AnimeRepository } from '@anime/repositories'
+import { AppError } from '@shared/errors'
+
+describe('AnimeService', () => {
+  describe('getById', () => {
+    it('should return anime when found', async () => {
+      // Arrange
+      const mockAnime = {
+        mal_id: 21,
+        title: 'One Piece',
+        score: 8.7,
+      }
+      vi.spyOn(AnimeRepository, 'getById').mockResolvedValue(mockAnime)
+
+      // Act
+      const result = await AnimeService.getById(21)
+
+      // Assert
+      expect(result).toEqual(mockAnime)
+      expect(AnimeRepository.getById).toHaveBeenCalledWith(21, true)
+    })
+
+    it('should throw AppError.notFound when anime not found', async () => {
+      // Arrange
+      vi.spyOn(AnimeRepository, 'getById').mockResolvedValue(null)
+
+      // Act & Assert
+      await expect(AnimeService.getById(999)).rejects.toThrow(
+        AppError.notFound('Anime not found')
+      )
+    })
+
+    it('should throw permission error for restricted content', async () => {
+      // Arrange
+      vi.spyOn(AnimeRepository, 'getById').mockRejectedValue(
+        AppError.permission('Restricted by parental control')
+      )
+
+      // Act & Assert
+      await expect(AnimeService.getById(21, true)).rejects.toThrow(
+        /parental control/
+      )
+    })
+  })
+
+  describe('searchAnime', () => {
+    it('should return paginated results', async () => {
+      // Arrange
+      const mockData = [
+        { mal_id: 1, title: 'Naruto' },
+        { mal_id: 2, title: 'Bleach' },
+      ]
+      vi.spyOn(AnimeRepository, 'searchAnime').mockResolvedValue({
+        data: mockData,
+        total: 100,
+      })
+
+      // Act
+      const result = await AnimeService.searchAnime({
+        format: 'anime-card',
+        filters: { genre_filter: ['action'] },
+        countFilters: {},
+        page: 1,
+        limit: 10,
+      })
+
+      // Assert
+      expect(result.data).toEqual(mockData)
+      expect(result.meta.total_items).toBe(100)
+      expect(result.meta.last_page).toBe(10)
+    })
+  })
+})
+```
+
+```typescript cache-service.test.ts
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { CacheService } from '@cache/services'
+import { getRedisClient } from '@libs/redis'
+
+vi.mock('@libs/redis')
+
+describe('CacheService', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  describe('generateKey', () => {
+    it('should generate simple key for string identifier', () => {
+      const key = CacheService.generateKey('anime', '21')
+      expect(key).toBe('anime:21')
+    })
+
+    it('should generate deterministic hash for object identifier', () => {
+      const obj1 = { id: 1, filter: 'action' }
+      const obj2 = { filter: 'action', id: 1 } // Different order
+
+      const key1 = CacheService.generateKey('search', obj1)
+      const key2 = CacheService.generateKey('search', obj2)
+
+      expect(key1).toBe(key2) // Should be identical
+      expect(key1).toMatch(/^search:[a-f0-9]{64}$/)
+    })
+  })
+
+  describe('get', () => {
+    it('should return cached value when exists', async () => {
+      // Arrange
+      const mockRedis = {
+        get: vi.fn().mockResolvedValue(JSON.stringify({ data: 'test' })),
+      }
+      vi.mocked(getRedisClient).mockResolvedValue(mockRedis as any)
+
+      // Act
+      const result = await CacheService.get('test-key')
+
+      // Assert
+      expect(result).toEqual({ data: 'test' })
+      expect(mockRedis.get).toHaveBeenCalledWith('test-key')
+    })
+
+    it('should return null when cache miss', async () => {
+      // Arrange
+      const mockRedis = {
+        get: vi.fn().mockResolvedValue(null),
+      }
+      vi.mocked(getRedisClient).mockResolvedValue(mockRedis as any)
+
+      // Act
+      const result = await CacheService.get('missing-key')
+
+      // Assert
+      expect(result).toBeNull()
+    })
+  })
+})
+```
+</CodeGroup>
+
+### 2. Repository Layer Testing
+
+Test database interactions:
+
+```typescript anime-repository.test.ts
+import { describe, it, expect, vi } from 'vitest'
+import { AnimeRepository } from '@anime/repositories'
+import { supabase } from '@libs/supabase'
+import { AppError } from '@shared/errors'
+
+vi.mock('@libs/supabase')
+
+describe('AnimeRepository', () => {
+  describe('getById', () => {
+    it('should call RPC function with correct parameters', async () => {
+      // Arrange
+      const mockData = [{ mal_id: 21, title: 'One Piece' }]
+      vi.mocked(supabase.rpc).mockResolvedValue({
+        data: mockData,
+        error: null,
+      } as any)
+
+      // Act
+      const result = await AnimeRepository.getById(21, true)
+
+      // Assert
+      expect(supabase.rpc).toHaveBeenCalledWith('get_anime_by_id', {
+        p_mal_id: 21,
+        p_parental_control: true,
+      })
+      expect(result).toEqual(mockData[0])
+    })
+
+    it('should throw AppError.database on Supabase error', async () => {
+      // Arrange
+      vi.mocked(supabase.rpc).mockResolvedValue({
+        data: null,
+        error: { message: 'Database connection failed' },
+      } as any)
+
+      // Act & Assert
+      await expect(AnimeRepository.getById(21)).rejects.toThrow(
+        AppError.database
+      )
+    })
+  })
+})
+```
+
+### 3. Controller Testing
+
+Test request validation and response formatting:
+
+```typescript anime-controller.test.ts
+import { describe, it, expect, vi } from 'vitest'
+import { AnimeController } from '@anime/controllers'
+import { AnimeService } from '@anime/services'
+import { AppError } from '@shared/errors'
+
+describe('AnimeController', () => {
+  describe('validateNumericId', () => {
+    it('should return number for valid ID', () => {
+      const result = AnimeController.validateNumericId('21')
+      expect(result).toBe(21)
+    })
+
+    it('should throw validation error for null ID', () => {
+      expect(() => AnimeController.validateNumericId(null)).toThrow(
+        AppError.validation('ID is required')
+      )
+    })
+
+    it('should throw validation error for invalid ID', () => {
+      expect(() => AnimeController.validateNumericId('abc')).toThrow(
+        /Invalid anime ID/
+      )
+    })
+
+    it('should throw validation error for negative ID', () => {
+      expect(() => AnimeController.validateNumericId('-5')).toThrow(
+        /Invalid anime ID/
+      )
+    })
+  })
+
+  describe('handleGetAnimeById', () => {
+    it('should return formatted response', async () => {
+      // Arrange
+      const mockAnime = { mal_id: 21, title: 'One Piece' }
+      vi.spyOn(AnimeService, 'getById').mockResolvedValue(mockAnime)
+      const url = new URL('http://localhost?id=21')
+
+      // Act
+      const result = await AnimeController.handleGetAnimeById(url)
+
+      // Assert
+      expect(result).toEqual({ data: mockAnime })
+    })
+  })
+})
+```
+
+### 4. Error Handling Testing
+
+```typescript error-handling.test.ts
+import { describe, it, expect } from 'vitest'
+import { AppError, isAppError, getHttpStatus } from '@shared/errors'
+
+describe('Error Handling', () => {
+  describe('AppError', () => {
+    it('should create validation error with correct properties', () => {
+      const error = AppError.validation('Invalid input', { field: 'email' })
+
+      expect(error.message).toBe('Invalid input')
+      expect(error.type).toBe('validation')
+      expect(error.status).toBe(400)
+      expect(error.operational).toBe(true)
+      expect(error.context).toEqual({ field: 'email' })
+      expect(error.timestamp).toBeInstanceOf(Date)
+    })
+
+    it('should create database error with correct status', () => {
+      const error = AppError.database('Connection failed')
+
+      expect(error.status).toBe(500)
+      expect(error.type).toBe('database')
+    })
+  })
+
+  describe('isAppError', () => {
+    it('should identify AppError instances', () => {
+      const appError = AppError.notFound('Not found')
+      const regularError = new Error('Regular error')
+
+      expect(isAppError(appError)).toBe(true)
+      expect(isAppError(regularError)).toBe(false)
+    })
+  })
+
+  describe('getHttpStatus', () => {
+    it('should return correct status for AppError', () => {
+      expect(getHttpStatus(AppError.validation('Invalid'))).toBe(400)
+      expect(getHttpStatus(AppError.notFound('Missing'))).toBe(404)
+      expect(getHttpStatus(AppError.permission('Denied'))).toBe(403)
+    })
+
+    it('should return 500 for unknown errors', () => {
+      expect(getHttpStatus(new Error('Unknown'))).toBe(500)
+    })
+  })
+})
+```
+
+### 5. Integration Testing
+
+Test API endpoints end-to-end:
+
+```typescript api-animes.test.ts
+import { describe, it, expect } from 'vitest'
+
+describe('API: /api/animes/getAnime', () => {
+  it('should return anime by ID', async () => {
+    const response = await fetch(
+      'http://localhost:4321/api/animes/getAnime?id=21'
+    )
+
+    expect(response.status).toBe(200)
+    const json = await response.json()
+    expect(json.data).toHaveProperty('mal_id', 21)
+    expect(json.data).toHaveProperty('title')
+  })
+
+  it('should return 400 for missing ID', async () => {
+    const response = await fetch(
+      'http://localhost:4321/api/animes/getAnime'
+    )
+
+    expect(response.status).toBe(400)
+    const json = await response.json()
+    expect(json.error).toMatch(/required/i)
+  })
+
+  it('should return 404 for non-existent anime', async () => {
+    const response = await fetch(
+      'http://localhost:4321/api/animes/getAnime?id=999999999'
+    )
+
+    expect(response.status).toBe(404)
+  })
+
+  it('should respect rate limits', async () => {
+    // Make 101 requests to exceed limit of 100
+    const requests = Array.from({ length: 101 }, () =>
+      fetch('http://localhost:4321/api/animes/getAnime?id=21')
+    )
+
+    const responses = await Promise.all(requests)
+    const rateLimited = responses.filter((r) => r.status === 429)
+
+    expect(rateLimited.length).toBeGreaterThan(0)
+  })
+})
+```
+
+## Test Utilities
+
+### Mock Factories
+
+```typescript test/factories/anime.factory.ts
+export const createMockAnime = (overrides = {}) => ({
+  mal_id: 21,
+  title: 'Test Anime',
+  score: 8.5,
+  synopsis: 'Test synopsis',
+  image_url: 'https://example.com/image.jpg',
+  ...overrides,
+})
+
+export const createMockAnimeList = (count = 5) =>
+  Array.from({ length: count }, (_, i) =>
+    createMockAnime({ mal_id: i + 1, title: `Anime ${i + 1}` })
+  )
+```
+
+### Test Helpers
+
+```typescript test/helpers/api.helper.ts
+export const makeApiRequest = async (endpoint: string, params = {}) => {
+  const url = new URL(`http://localhost:4321${endpoint}`)
+  Object.entries(params).forEach(([key, value]) => {
+    url.searchParams.append(key, String(value))
+  })
+  return fetch(url.toString())
+}
+
+export const expectValidApiResponse = (response: Response) => {
+  expect(response.headers.get('Content-Type')).toMatch(/application\/json/)
+  expect(response.status).toBeGreaterThanOrEqual(200)
+  expect(response.status).toBeLessThan(300)
+}
+```
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Test Isolation" icon="shield">
+    Each test should be independent. Use `beforeEach` to reset state and mocks.
+  </Card>
+
+  <Card title="AAA Pattern" icon="list-check">
+    Structure tests with Arrange, Act, Assert for clarity.
+  </Card>
+
+  <Card title="Mock External Services" icon="plug">
+    Always mock Supabase, Redis, and external APIs in unit tests.
+  </Card>
+
+  <Card title="Test Edge Cases" icon="triangle-exclamation">
+    Cover error conditions, null values, and boundary cases.
+  </Card>
+
+  <Card title="Use Type Safety" icon="code">
+    Leverage TypeScript for type-safe test expectations.
+  </Card>
+
+  <Card title="Fast Tests" icon="bolt">
+    Keep unit tests fast (under 100ms) by mocking I/O operations.
+  </Card>
+</CardGroup>
+
+## Coverage Goals
+
+### Priority Testing Areas
+
+1. **Business Logic** (Services) - 80%+ coverage
+2. **Data Access** (Repositories) - 70%+ coverage
+3. **Request Validation** (Controllers) - 80%+ coverage
+4. **Error Handling** - 100% coverage
+5. **Utilities** - 90%+ coverage
+
+### Running Coverage Reports
+
+```bash
+pnpm test --coverage
+```
+
+Coverage reports show:
+- Line coverage
+- Branch coverage
+- Function coverage
+- Statement coverage
+
+## Continuous Integration
+
+Tests run automatically on:
+- Every pull request
+- Commits to main branch
+- Pre-deployment checks
+
+```yaml .github/workflows/test.yml
+name: Tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v2
+      - run: pnpm install
+      - run: pnpm test
+```
+
+<Note>
+  Tests are the safety net for refactoring and adding new features. Write tests for critical paths, edge cases, and any code that handles user data or authentication.
+</Note>

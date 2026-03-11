@@ -1,0 +1,150 @@
+---
+title: Anime Streaming
+description: Watch your favorite anime with our high-quality Video.js player
+icon: play
+---
+
+## High-Quality Video Playback
+
+AniDev provides a seamless streaming experience powered by Video.js, allowing you to watch anime in high quality with full playback controls.
+
+<CardGroup cols={2}>
+  <Card title="HD Streaming" icon="video">
+    Watch anime in high definition with adaptive quality settings
+  </Card>
+  <Card title="Episode Navigation" icon="list">
+    Easily switch between episodes with our intuitive episode list
+  </Card>
+  <Card title="Progress Sync" icon="clock">
+    Your watch progress is automatically saved and synced
+  </Card>
+  <Card title="Keyboard Controls" icon="keyboard">
+    Use keyboard shortcuts for quick playback control
+  </Card>
+</CardGroup>
+
+## Watching Anime
+
+<Steps>
+  <Step title="Find Your Anime">
+    Browse or search for the anime you want to watch from the homepage or search page.
+  </Step>
+  
+  <Step title="Select an Episode">
+    Click on an anime card to view its details, then select an episode from the episode list.
+  </Step>
+  
+  <Step title="Start Watching">
+    The video player will load automatically. Use the playback controls to pause, adjust volume, or change quality.
+  </Step>
+  
+  <Step title="Navigate Episodes">
+    Use the episode list sidebar to jump to different episodes or click next/previous buttons.
+  </Step>
+</Steps>
+
+## Video Player Features
+
+Our video player comes with all the features you need for an optimal viewing experience:
+
+### Playback Controls
+
+- **Play/Pause**: Click the play button or press spacebar
+- **Volume Control**: Adjust volume with the slider or use up/down arrow keys
+- **Seek**: Click on the progress bar or use left/right arrow keys
+- **Fullscreen**: Click the fullscreen button or press 'F'
+- **Picture-in-Picture**: Watch while browsing other content
+
+<Note>
+  The video player uses the `/api/videoProxy` endpoint to stream content securely and efficiently.
+</Note>
+
+### Episode List
+
+The episode list appears alongside the player (or below on mobile devices) and includes:
+
+- **Episode Thumbnails**: Visual preview of each episode
+- **Episode Titles**: See the name of each episode
+- **Duration**: Know how long each episode runs
+- **Current Episode Highlight**: The currently playing episode is highlighted with your accent color
+- **Pagination**: Navigate through large episode lists with page controls
+
+```typescript
+// Episodes are fetched from the API
+GET /episodes/getEpisodes?mal_id={anime_id}&page={page_number}
+```
+
+<Tip>
+  The episode list supports pagination, loading 20 episodes at a time for better performance.
+</Tip>
+
+## Watch Page URL Structure
+
+When watching anime, the URL follows this pattern:
+
+```
+/watch/{anime-slug}_{mal_id}?ep={episode_id}
+```
+
+**Example**: `/watch/attack-on-titan_16498?ep=1`
+
+This URL structure allows you to:
+- Share specific episodes with friends
+- Bookmark your favorite episodes
+- Return to where you left off
+
+## Mobile Experience
+
+AniDev's video player is fully optimized for mobile devices:
+
+<CardGroup cols={2}>
+  <Card title="Touch Controls" icon="hand">
+    Tap to show/hide controls, swipe for volume and brightness
+  </Card>
+  <Card title="Responsive Layout" icon="mobile">
+    Player and episode list adapt to your screen size
+  </Card>
+  <Card title="Native Fullscreen" icon="expand">
+    Full mobile browser support for immersive viewing
+  </Card>
+  <Card title="Data Efficient" icon="wifi">
+    Optimized streaming reduces data usage
+  </Card>
+</CardGroup>
+
+## Frequently Asked Questions
+
+<Accordion title="How do I change video quality?">
+  Video quality is automatically adjusted based on your internet connection speed. The player uses adaptive bitrate streaming to provide the best quality possible without buffering.
+</Accordion>
+
+<Accordion title="Can I watch with subtitles?">
+  Subtitle support depends on the anime source. When available, you can enable subtitles from the video player settings menu.
+</Accordion>
+
+<Accordion title="Why isn't the video playing?">
+  If the video doesn't play, try:
+  - Refreshing the page
+  - Checking your internet connection
+  - Clearing your browser cache
+  - Trying a different browser
+  
+  Videos are proxied through `/api/videoProxy` for security and compatibility.
+</Accordion>
+
+<Accordion title="Can I download episodes for offline viewing?">
+  Currently, AniDev is a streaming-only platform. Offline downloads are not available at this time.
+</Accordion>
+
+## Technical Implementation
+
+AniDev uses modern web technologies for video streaming:
+
+- **Video.js v8.21.0**: Industry-standard HTML5 video player
+- **Adaptive Streaming**: Automatic quality adjustment
+- **Secure Proxy**: All video streams are proxied through our secure `/api/videoProxy` endpoint
+- **Progress Tracking**: Watch progress is saved to your profile (requires authentication)
+
+<Note>
+  Video playback data is cached using Redis for improved performance and faster load times.
+</Note>

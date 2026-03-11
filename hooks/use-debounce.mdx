@@ -1,0 +1,234 @@
+---
+title: "useDebounce"
+description: "Custom hook for debouncing values to optimize performance in search inputs and form validation"
+---
+
+# useDebounce
+
+The `useDebounce` hook delays the update of a value until a specified period of inactivity has passed. This is essential for optimizing performance in scenarios like search inputs, where you want to reduce the frequency of expensive operations such as API calls.
+
+## Type Signature
+
+```typescript
+function useDebounce<T>(value: T, delay: number): T
+```
+
+## Parameters
+
+<ParamField path="value" type="T" required>
+  The value to debounce. Can be of any type (string, number, object, etc.)
+</ParamField>
+
+<ParamField path="delay" type="number" required>
+  The delay in milliseconds to wait before updating the debounced value
+</ParamField>
+
+## Return Value
+
+<ResponseField name="debouncedValue" type="T">
+  The debounced version of the input value that only updates after the specified delay period without changes
+</ResponseField>
+
+## Usage Examples
+
+### Search Input Optimization
+
+```typescript
+import { useDebounce } from '@hooks/useDebounce'
+import { useState, useEffect } from 'react'
+
+const SearchBar = () => {
+  const [search, setSearch] = useState('')
+  const debouncedSearch = useDebounce(search, 300)
+
+  useEffect(() => {
+    if (debouncedSearch) {
+      // This only runs 300ms after the user stops typing
+      fetchSearchResults(debouncedSearch)
+    }
+  }, [debouncedSearch])
+
+  return (
+    <input
+      type="text"
+      value={search}
+      onChange={(e) => setSearch(e.target.value)}
+      placeholder="Search anime..."
+    />
+  )
+}
+```
+
+### Form Validation
+
+```typescript
+const EmailInput = () => {
+  const [email, setEmail] = useState('')
+  const [isValid, setIsValid] = useState(false)
+  const debouncedEmail = useDebounce(email, 500)
+
+  useEffect(() => {
+    // Validate email only after user stops typing for 500ms
+    if (debouncedEmail) {
+      const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(debouncedEmail)
+      setIsValid(valid)
+    }
+  }, [debouncedEmail])
+
+  return (
+    <div>
+      <input
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        className={isValid ? 'valid' : 'invalid'}
+      />
+      {!isValid && debouncedEmail && (
+        <span className="error">Invalid email format</span>
+      )}
+    </div>
+  )
+}
+```
+
+### Auto-Save Feature
+
+```typescript
+const NoteEditor = () => {
+  const [content, setContent] = useState('')
+  const debouncedContent = useDebounce(content, 1000)
+
+  useEffect(() => {
+    // Auto-save 1 second after user stops typing
+    if (debouncedContent) {
+      saveNote(debouncedContent)
+    }
+  }, [debouncedContent])
+
+  return (
+    <textarea
+      value={content}
+      onChange={(e) => setContent(e.target.value)}
+      placeholder="Type your note..."
+    />
+  )
+}
+```
+
+### API Call Optimization
+
+```typescript
+const AnimeSearch = () => {
+  const [query, setQuery] = useState('')
+  const debouncedQuery = useDebounce(query, 300)
+  
+  const { data, loading } = useFetch<Anime[]>({
+    url: `/api/animes/search?q=${debouncedQuery}`,
+    skip: !debouncedQuery,
+  })
+
+  return (
+    <div>
+      <input
+        type="search"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Search anime..."
+      />
+      {loading && <Spinner />}
+      <SearchResults results={data} />
+    </div>
+  )
+}
+```
+
+### Window Resize Handler
+
+```typescript
+const ResponsiveComponent = () => {
+  const [windowSize, setWindowSize] = useState({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  })
+  const debouncedSize = useDebounce(windowSize, 150)
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      })
+    }
+
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  useEffect(() => {
+    // Only recalculate layout after resize stops for 150ms
+    recalculateLayout(debouncedSize)
+  }, [debouncedSize])
+
+  return <div>Window: {debouncedSize.width}x{debouncedSize.height}</div>
+}
+```
+
+## Use Cases
+
+- **Search inputs** - Reduce API calls while user is typing
+- **Form validation** - Validate fields after user finishes input
+- **Auto-save** - Save changes after user stops editing
+- **Filtering** - Update filtered results after filter changes stabilize
+- **Resize handlers** - Recalculate layouts after window resize completes
+- **API optimization** - Batch similar requests together
+
+## Performance Benefits
+
+<Tabs>
+  <Tab title="Without Debounce">
+    ```typescript
+    // User types "naruto" - 6 API calls
+    // "n" -> API call
+    // "na" -> API call
+    // "nar" -> API call
+    // "naru" -> API call
+    // "narut" -> API call
+    // "naruto" -> API call
+    ```
+  </Tab>
+  <Tab title="With Debounce (300ms)">
+    ```typescript
+    // User types "naruto" - 1 API call
+    // User types quickly, waits 300ms
+    // "naruto" -> API call (only after pause)
+    ```
+  </Tab>
+</Tabs>
+
+<Note>
+  The debounce delay should be tuned based on your use case. Common values:
+  - **200-300ms** for search inputs
+  - **500-1000ms** for auto-save features
+  - **150-200ms** for resize handlers
+</Note>
+
+## How It Works
+
+The hook maintains an internal debounced state and sets up a timeout effect:
+
+1. When the input `value` changes, a new timeout is created
+2. If `value` changes again before the timeout expires, the previous timeout is cleared
+3. Only when `value` remains stable for the full `delay` period does the debounced value update
+4. The timeout is automatically cleaned up when the component unmounts
+
+<Tip>
+  Combine `useDebounce` with `useFetch` and `skip` parameter for optimal search performance:
+  ```typescript
+  const debouncedQuery = useDebounce(query, 300)
+  const { data } = useFetch({ url: `/search?q=${debouncedQuery}`, skip: !debouncedQuery })
+  ```
+</Tip>
+
+## Source
+
+Location: `src/domains/search/stores/useDebounce.ts:25`

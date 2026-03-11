@@ -1,0 +1,268 @@
+---
+title: Profile Management
+description: Customize your profile, upload avatars, and manage your personal information
+icon: user-circle
+---
+
+## Overview
+
+Your AniDev profile is the center of your anime experience. Customize your avatar, banner image, and personal information to make your profile uniquely yours.
+
+## Profile Customization
+
+AniDev stores user profile data in the `public_users` table and syncs it with your authentication session.
+
+### Accessing Your Profile
+
+Navigate to `/profile` to view and edit your profile settings. Your profile includes:
+
+- Profile avatar (image or GIF)
+- Banner image
+- Display name
+- Personal information (name, last name, birthday, gender)
+- Anime preferences and statistics
+
+## Avatar Upload
+
+AniDev provides a powerful image editor with drag-and-drop support and cropping capabilities.
+
+<Steps>
+  <Step title="Open the Image Editor">
+    From your profile page, click on your current avatar or the "Edit Profile" button to open the image editor modal.
+  </Step>
+
+  <Step title="Upload Your Image">
+    You have two options:
+    
+    **Drag and Drop**:
+    - Drag an image file from your computer directly into the cropping area
+    - The editor supports both static images and animated GIFs
+    
+    **File Selection**:
+    - Click on the cropping area to open a file picker
+    - Select your desired image file
+  </Step>
+
+  <Step title="Crop Your Image">
+    Use the built-in cropper to adjust your image:
+    
+    - **Avatar**: Cropped to a 1:1 aspect ratio (square)
+    - **Banner**: Cropped to 1080:300 aspect ratio (wide)
+    - Drag to reposition the crop area
+    - Use mouse wheel or pinch to zoom
+    - Preview appears in real-time above the editor
+    
+    The cropper is powered by `react-cropper` and `super-image-cropper` libraries.
+  </Step>
+
+  <Step title="Apply Changes">
+    Click "Apply Changes" to save your cropped image. The system will:
+    
+    - Upload the image to AniDev's image storage
+    - Optimize it for web delivery
+    - Update your profile in the `public_users` table
+    - Sync the change across your session
+  </Step>
+</Steps>
+
+### Image Upload Technical Details
+
+The image upload process uses the following components:
+
+**Component**: `src/domains/user/components/user-profile/image-editor.tsx`
+
+```typescript
+const { isDragging, dragDropProps, dropTargetRef } = useDragAndDrop({
+  onDrop: (file) => {
+    if (!file) return
+    const blobUrl = URL.createObjectURL(file)
+    if (isAvatar) {
+      setAvatar(blobUrl)
+      setAvatarType(file.type)
+    } else {
+      setBannerType(file.type)
+      setBannerImage(blobUrl)
+    }
+  },
+})
+```
+
+**Image Processing**:
+- Images are converted to blob URLs for preview
+- Cropping happens client-side before upload
+- Uploaded images are processed via `/api/uploadImage` (requires authentication)
+- Final images are saved via `/api/saveImage`
+
+<Warning>
+  Image uploads require authentication. The endpoints are protected by the `checkSession` middleware to ensure only authenticated users can upload images.
+</Warning>
+
+## Banner Image
+
+In addition to your avatar, you can customize your profile banner.
+
+<Steps>
+  <Step title="Select Banner Option">
+    From the profile editor, choose the banner image option.
+  </Step>
+
+  <Step title="Upload and Crop">
+    Follow the same upload process as avatars. The banner uses a different aspect ratio (1080:300) for a wide, cinematic look.
+  </Step>
+
+  <Step title="Choose from Character Collection">
+    AniDev also provides a collection of pre-made character and anime banner images you can select from.
+    
+    Browse the available options in the `CharacterImagesCollection` or `AnimeBannerCollection` components.
+  </Step>
+</Steps>
+
+## Updating Profile Information
+
+Update your personal details through the profile management interface.
+
+### Editable Fields
+
+- **Display Name**: Your public username (minimum 3 characters)
+- **First Name**: Your given name
+- **Last Name**: Your family name
+- **Birthday**: Date of birth (used for age-appropriate content filtering)
+- **Gender**: Male, Female, or Other
+
+### Anime Preferences
+
+Update your anime-related preferences:
+
+- **Favorite Animes**: Your top anime selections
+- **Watch Frequency**: Daily, Weekly, Monthly, Occasionally, or Rarely
+- **Fanatic Level**: Casual Viewer, Regular Fan, Dedicated Fan, Otaku, or Hardcore Otaku
+- **Preferred Format**: TV, Movie, OVA, ONA, Special, or No preference
+- **Watched Animes**: Track completed series
+- **Favorite Studios**: Select from 16+ anime studios
+- **Favorite Genres**: Choose from 24+ genres
+
+### Saving Profile Changes
+
+Profile updates are handled by the `updateUserImages` service:
+
+**Service**: `src/domains/user/services/profile.ts`
+
+```typescript
+export const updateUserImages = async (
+  userId: string,
+  avatar?: string,
+  bannerImage?: string,
+  name?: string
+): Promise<any> => {
+  // Validates at least one field is provided
+  // Updates the public_users table
+  // Returns updated profile data
+}
+```
+
+Changes are immediately reflected across the application through the `useGlobalUserPreferences` store.
+
+## Profile Data Storage
+
+Your profile information is stored in multiple locations:
+
+1. **Authentication Metadata**: Basic info stored in Supabase Auth `user_metadata`
+   - `user_name`: Your username
+   - `avatar_url`: Avatar image URL
+
+2. **Public Users Table**: Extended profile data in `public_users`
+   - `id`: User ID (matches auth user)
+   - `name`: Display name
+   - `last_name`: Last name
+   - `avatar_url`: Avatar URL
+   - `banner_image`: Banner URL
+   - `birthday`: Date of birth
+   - `gender`: Gender selection
+   - `favorite_animes`: Array of favorite anime IDs
+   - `frequency_of_watch`: Watching frequency
+   - `fanatic_level`: Otaku level
+   - `preferred_format`: Preferred anime format
+   - `watched_animes`: List of completed animes
+   - `favorite_studios`: Favorite studio selections
+   - `favorite_genres`: Preferred genres
+
+## State Management
+
+Profile data is managed through Zustand stores for reactive updates:
+
+**Global User Store**: `src/domains/user/stores/user-store.ts`
+
+```typescript
+interface GlobalUserPreferences {
+  userInfo: UserInfo | null
+  setUserInfo: (user: UserInfo | null) => void
+  // Other preferences...
+}
+```
+
+**Update Profile Store**: `src/domains/user/stores/update-profile.ts`
+
+Manages temporary state during profile editing:
+- Avatar changes
+- Banner changes
+- Image type tracking
+
+## Image Optimization
+
+All uploaded images are optimized through AniDev's image proxy:
+
+- **Automatic Resizing**: Images are resized to appropriate dimensions
+- **Format Conversion**: Supports WebP and AVIF for better compression
+- **Quality Control**: Configurable quality settings (default: 75)
+- **CDN Caching**: Optimized images are cached for 1 year
+- **Lazy Loading**: Images load progressively for better performance
+
+<Note>
+  The image proxy endpoint is `/api/proxy` and supports query parameters:
+  - `url`: Source image URL
+  - `width`: Target width
+  - `quality`: Compression quality (1-100)
+  - `format`: Output format (webp or avif)
+</Note>
+
+## Troubleshooting
+
+<Accordion title="My avatar isn't uploading">
+  Check the following:
+  - You are signed in (uploads require authentication)
+  - Image file is a valid format (JPEG, PNG, GIF, WebP)
+  - File size is reasonable (very large files may fail)
+  - Your network connection is stable
+  - Check browser console for specific error messages
+</Accordion>
+
+<Accordion title="The image cropper isn't working">
+  The cropper requires:
+  - A modern browser with JavaScript enabled
+  - Sufficient memory to process the image
+  - Try with a smaller image file if you experience issues
+  - Refresh the page and try again
+</Accordion>
+
+<Accordion title="Profile changes aren't saving">
+  Ensure:
+  - You clicked the "Save" or "Apply Changes" button
+  - You have a stable internet connection
+  - At least one field was modified
+  - Check for validation errors displayed in the UI
+</Accordion>
+
+<Accordion title="Can I use animated GIFs?">
+  Yes! AniDev supports animated GIFs for both avatars and banners. The system handles GIFs differently from static images to preserve animation.
+</Accordion>
+
+## API Reference
+
+Profile management endpoints:
+
+- `POST /api/uploadImage` - Upload and process images (requires authentication)
+- `POST /api/saveImage` - Save avatar images (requires authentication)
+- `POST /api/saveUserPreferences` - Update user profile and preferences
+- `GET /api/proxy` - Optimized image proxy with resizing and format conversion
+
+See [API Reference](/api-reference/user) for detailed endpoint documentation.

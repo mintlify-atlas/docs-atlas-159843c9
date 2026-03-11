@@ -1,0 +1,434 @@
+---
+title: "useDragAndDrop"
+description: "Custom hook for implementing drag and drop functionality for file uploads with visual feedback"
+---
+
+# useDragAndDrop
+
+The `useDragAndDrop` hook provides a complete drag and drop implementation for file uploads, including visual feedback during drag operations, support for both File objects and data URLs, and proper event handling with automatic cleanup.
+
+## Type Signature
+
+```typescript
+interface UseDragAndDropProps {
+  onDrop?: (file: File) => void
+  onDropDataUrl?: (dataUrl: string) => void
+  enabled?: boolean
+}
+
+function useDragAndDrop(props?: UseDragAndDropProps): {
+  isDragging: boolean
+  dragDropProps: { ref: RefObject<HTMLDivElement> }
+  dropTargetRef: RefObject<HTMLDivElement>
+}
+```
+
+## Parameters
+
+<ParamField path="onDrop" type="(file: File) => void">
+  Callback function executed when a file is dropped, receiving the File object
+</ParamField>
+
+<ParamField path="onDropDataUrl" type="(dataUrl: string) => void">
+  Callback function executed when a file is dropped, receiving the file as a base64 data URL string
+</ParamField>
+
+<ParamField path="enabled" type="boolean" default="true">
+  Whether drag and drop functionality is enabled. When false, drag events are ignored
+</ParamField>
+
+## Return Value
+
+<ResponseField name="isDragging" type="boolean">
+  Current drag state - true when a file is being dragged over the drop zone
+</ResponseField>
+
+<ResponseField name="dragDropProps" type="{ ref: RefObject<HTMLDivElement> }">
+  Props object containing the ref to spread on your drop target element
+</ResponseField>
+
+<ResponseField name="dropTargetRef" type="RefObject<HTMLDivElement>">
+  Direct access to the drop target ref (same as dragDropProps.ref)
+</ResponseField>
+
+## Usage Examples
+
+### Basic File Upload
+
+```typescript
+import { useDragAndDrop } from '@hooks/useDragAndDrop'
+import { useState } from 'react'
+
+const FileUploader = () => {
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null)
+  
+  const { isDragging, dropTargetRef } = useDragAndDrop({
+    onDrop: (file) => {
+      console.log('File dropped:', file.name)
+      setUploadedFile(file)
+    },
+  })
+
+  return (
+    <div
+      ref={dropTargetRef}
+      className={`upload-zone ${isDragging ? 'dragging' : ''}`}
+    >
+      {isDragging ? (
+        <p>Drop your file here</p>
+      ) : (
+        <p>Drag and drop a file here</p>
+      )}
+      {uploadedFile && <p>Uploaded: {uploadedFile.name}</p>}
+    </div>
+  )
+}
+```
+
+### Image Upload with Preview
+
+```typescript
+const ImageUploader = () => {
+  const [imageUrl, setImageUrl] = useState<string>('')
+  
+  const { isDragging, dropTargetRef } = useDragAndDrop({
+    onDropDataUrl: (dataUrl) => {
+      setImageUrl(dataUrl)
+    },
+  })
+
+  return (
+    <div
+      ref={dropTargetRef}
+      className={`image-upload ${isDragging ? 'highlight' : ''}`}
+    >
+      {imageUrl ? (
+        <img src={imageUrl} alt="Preview" className="preview" />
+      ) : (
+        <div className="placeholder">
+          {isDragging ? 'Drop image here' : 'Drag image to upload'}
+        </div>
+      )}
+    </div>
+  )
+}
+```
+
+### Profile Avatar Upload
+
+```typescript
+const AvatarUpload = () => {
+  const [avatar, setAvatar] = useState<string>('')
+  
+  const { isDragging, dropTargetRef } = useDragAndDrop({
+    onDrop: async (file) => {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please upload an image file')
+        return
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image must be less than 5MB')
+        return
+      }
+      
+      // Upload to server
+      const formData = new FormData()
+      formData.append('avatar', file)
+      
+      const response = await fetch('/api/uploadImage', {
+        method: 'POST',
+        body: formData,
+      })
+      
+      const data = await response.json()
+      setAvatar(data.url)
+      toast.success('Avatar uploaded successfully')
+    },
+  })
+
+  return (
+    <div className="avatar-upload">
+      <div
+        ref={dropTargetRef}
+        className={`drop-zone ${isDragging ? 'active' : ''}`}
+      >
+        {avatar ? (
+          <img src={avatar} alt="Avatar" className="avatar" />
+        ) : (
+          <div className="placeholder">
+            <UserIcon />
+            <p>Drop image to upload avatar</p>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+```
+
+### Both File and Data URL
+
+```typescript
+const DualHandlerUpload = () => {
+  const [file, setFile] = useState<File | null>(null)
+  const [preview, setPreview] = useState<string>('')
+  
+  const { isDragging, dropTargetRef } = useDragAndDrop({
+    onDrop: (file) => {
+      // Handle the File object
+      setFile(file)
+      uploadToServer(file)
+    },
+    onDropDataUrl: (dataUrl) => {
+      // Handle the data URL for preview
+      setPreview(dataUrl)
+    },
+  })
+
+  return (
+    <div ref={dropTargetRef}>
+      {preview && <img src={preview} alt="Preview" />}
+      {file && <p>{file.name} ({(file.size / 1024).toFixed(2)} KB)</p>}
+    </div>
+  )
+}
+```
+
+### Conditional Enable/Disable
+
+```typescript
+const ConditionalUpload = ({ userCanUpload }: { userCanUpload: boolean }) => {
+  const { isDragging, dropTargetRef } = useDragAndDrop({
+    enabled: userCanUpload,
+    onDrop: (file) => {
+      handleUpload(file)
+    },
+  })
+
+  return (
+    <div
+      ref={dropTargetRef}
+      className={!userCanUpload ? 'disabled' : ''}
+    >
+      {userCanUpload ? (
+        isDragging ? 'Drop file' : 'Drag file here'
+      ) : (
+        'Upload disabled - please log in'
+      )}
+    </div>
+  )
+}
+```
+
+### With Loading State
+
+```typescript
+const UploadWithProgress = () => {
+  const [uploading, setUploading] = useState(false)
+  
+  const { isDragging, dropTargetRef } = useDragAndDrop({
+    enabled: !uploading,
+    onDrop: async (file) => {
+      setUploading(true)
+      try {
+        await uploadFile(file)
+        toast.success('Upload complete')
+      } catch (error) {
+        toast.error('Upload failed')
+      } finally {
+        setUploading(false)
+      }
+    },
+  })
+
+  return (
+    <div ref={dropTargetRef}>
+      {uploading ? (
+        <Spinner />
+      ) : isDragging ? (
+        <p>Drop to upload</p>
+      ) : (
+        <p>Drag file here</p>
+      )}
+    </div>
+  )
+}
+```
+
+## Styling the Drop Zone
+
+### CSS Example
+
+```css
+.drop-zone {
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  padding: 40px;
+  text-align: center;
+  transition: all 0.3s ease;
+  background-color: #fafafa;
+}
+
+.drop-zone.dragging {
+  border-color: #4f46e5;
+  background-color: #eef2ff;
+  transform: scale(1.02);
+}
+
+.drop-zone.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: #f5f5f5;
+}
+```
+
+### Tailwind CSS Example
+
+```typescript
+const TailwindDropZone = () => {
+  const { isDragging, dropTargetRef } = useDragAndDrop({
+    onDrop: handleDrop,
+  })
+
+  return (
+    <div
+      ref={dropTargetRef}
+      className={`
+        border-2 border-dashed rounded-lg p-8 text-center
+        transition-all duration-300
+        ${isDragging 
+          ? 'border-blue-500 bg-blue-50 scale-105' 
+          : 'border-gray-300 bg-gray-50'
+        }
+        hover:border-blue-400
+      `}
+    >
+      <UploadIcon className="mx-auto mb-4" />
+      <p>{isDragging ? 'Drop it!' : 'Drag files here'}</p>
+    </div>
+  )
+}
+```
+
+## Use Cases
+
+- **Profile avatar uploads** with image preview
+- **Document uploads** for anime reviews or comments
+- **Batch image uploads** for galleries
+- **File attachments** in messaging systems
+- **Cover image uploads** for user-created lists
+- **Screenshot sharing** for anime discussions
+- **Banner image uploads** for custom profiles
+
+## File Validation
+
+<CodeGroup>
+```typescript Type Validation
+const { isDragging, dropTargetRef } = useDragAndDrop({
+  onDrop: (file) => {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
+    
+    if (!allowedTypes.includes(file.type)) {
+      toast.error('Only JPEG, PNG, and WebP images are allowed')
+      return
+    }
+    
+    uploadFile(file)
+  },
+})
+```
+
+```typescript Size Validation
+const { isDragging, dropTargetRef } = useDragAndDrop({
+  onDrop: (file) => {
+    const maxSize = 10 * 1024 * 1024 // 10MB
+    
+    if (file.size > maxSize) {
+      toast.error('File must be less than 10MB')
+      return
+    }
+    
+    uploadFile(file)
+  },
+})
+```
+
+```typescript Combined Validation
+const validateAndUpload = (file: File) => {
+  // Type check
+  if (!file.type.startsWith('image/')) {
+    toast.error('Only images are allowed')
+    return
+  }
+  
+  // Size check
+  if (file.size > 5 * 1024 * 1024) {
+    toast.error('Image must be less than 5MB')
+    return
+  }
+  
+  // Dimension check (for images)
+  const img = new Image()
+  img.onload = () => {
+    if (img.width > 4000 || img.height > 4000) {
+      toast.error('Image dimensions too large')
+      return
+    }
+    uploadFile(file)
+  }
+  img.src = URL.createObjectURL(file)
+}
+
+const { dropTargetRef } = useDragAndDrop({
+  onDrop: validateAndUpload,
+})
+```
+</CodeGroup>
+
+## How It Works
+
+1. **Drag Counter**: Uses a counter to handle nested drag enter/leave events correctly
+2. **Event Prevention**: Prevents default browser behavior for drag events
+3. **Visual Feedback**: Provides `isDragging` state for UI updates
+4. **File Processing**: Extracts the first file from the drop event
+5. **Dual Callbacks**: Supports both File object and data URL callbacks
+6. **Cleanup**: Automatically removes event listeners on unmount
+
+<Note>
+  The hook only processes the first file if multiple files are dropped. To handle multiple files, you'll need to modify the implementation or handle it in your `onDrop` callback.
+</Note>
+
+## Accessibility
+
+<Tip>
+  Always provide an alternative file input for users who can't or prefer not to use drag and drop:
+  ```typescript
+  <div ref={dropTargetRef}>
+    <p>Drag and drop or</p>
+    <input 
+      type="file" 
+      onChange={(e) => handleFile(e.target.files?.[0])} 
+      aria-label="Upload file"
+    />
+  </div>
+  ```
+</Tip>
+
+## Browser Compatibility
+
+The drag and drop API is supported in all modern browsers:
+- ✅ Chrome/Edge (all versions)
+- ✅ Firefox (all versions)
+- ✅ Safari (all versions)
+- ✅ Opera (all versions)
+
+<Note>
+  Mobile browsers have limited drag and drop support. Consider providing a traditional file input as a fallback for mobile users.
+</Note>
+
+## Source
+
+Location: `src/domains/shared/hooks/useDragAndDrop.ts:47`

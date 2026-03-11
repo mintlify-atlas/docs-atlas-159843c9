@@ -1,80 +1,160 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: 'Quickstart'
+description: 'Get started with AniDev in minutes - from account creation to watching your first anime'
 ---
 
-## Get started in three steps
+Welcome to AniDev! This guide will walk you through creating your account and watching your first anime on our modern streaming platform.
 
-Get your documentation site running locally and make your first customization.
+## What is AniDev?
 
-### Step 1: Set up your local environment
+AniDev is a modern anime streaming and exploration platform that offers:
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+- High-quality anime streaming with advanced video player
+- Dynamic search with multiple filters (genres, studios, ratings, year, season)
+- Personal collections and watch history tracking
+- Schedule system for upcoming anime releases
+- Personalized user experience with custom themes
 
-### Step 2: Deploy your changes
+<Steps>
+  <Step title="Create Your Account">
+    Visit [anidev.app](https://anidev.app) and click the **Sign Up** button in the navigation bar.
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+    Fill in the registration form:
+    - **Username**: Choose a unique username for your profile
+    - **Email**: Your email address for account verification
+    - **Password**: A secure password for your account
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+    <Note>
+      AniDev uses Supabase Authentication with PKCE flow for secure account creation. Your credentials are encrypted and protected.
+    </Note>
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+    Once you submit the form, you'll receive a verification email. Click the link to activate your account.
+  </Step>
 
-### Step 3: Go live
+  <Step title="Set Up Your Profile">
+    After signing in, navigate to your profile page at `/profile`.
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+    **Customize your profile:**
+    - **Avatar**: Upload a profile picture using the drag-and-drop interface with built-in image cropping
+    - **Username**: Update your display name if needed
+    - **Theme**: Choose your accent color to personalize the interface
+    - **Parental Control**: Toggle content filtering for family-friendly viewing
 
-## Next steps
+    <Tip>
+      Your profile preferences are automatically saved and synced across all your devices.
+    </Tip>
 
-Now that you have your docs running, explore these key features:
+    **Create your collections:**
+    - **Collection**: Your main anime library
+    - **Watching**: Track animes you're currently watching
+    - **Completed**: Mark animes you've finished
+    - **To Watch**: Plan your next anime adventure
+  </Step>
+
+  <Step title="Discover and Watch Your First Anime">
+    Now you're ready to explore AniDev's extensive anime library!
+
+    **Browse the homepage:**
+    - The homepage showcases curated anime sections including trending, top-rated, and seasonal releases
+    - Each anime card displays the title, cover image, genres, and rating
+
+    **Use advanced search:**
+    1. Click the search icon or navigate to `/search`
+    2. Use filters to narrow your search:
+       - **Genres**: Action, Adventure, Comedy, Drama, Fantasy, and more
+       - **Year**: Filter by release year
+       - **Status**: Currently Airing, Finished Airing, or Upcoming
+       - **Studios**: Search by animation studio
+       - **Rating**: Filter by user ratings
+
+    **Watch an anime:**
+    1. Click on any anime card to view its details page
+    2. Browse the episode list, watch trailers, and read reviews
+    3. Click "Watch" or select an episode to start streaming
+    4. Enjoy high-quality playback with the Vidstack player featuring:
+       - Quality selection
+       - Episode navigation
+       - Progress tracking (automatically saved to your watch history)
+       - Keyboard shortcuts for controls
+
+    <Note>
+      Your watch progress is automatically tracked. Return anytime and pick up right where you left off!
+    </Note>
+  </Step>
+
+  <Step title="Explore Additional Features">
+    **Schedule System:**
+    - Visit `/schedule` to view a calendar of upcoming anime releases
+    - Never miss a new episode of your favorite shows
+
+    **Advanced Filtering:**
+    - Use the debounced search for instant results as you type
+    - Combine multiple filters for precise anime discovery
+
+    **Collections Management:**
+    - Add animes to your collections from any anime detail page
+    - Drag and drop to reorder your collection
+    - View your complete watch history in your profile
+
+    <Tip>
+      Enable notifications to get updates when new episodes of your watched animes are released.
+    </Tip>
+  </Step>
+</Steps>
+
+## Quick Tips
 
 <CardGroup cols={2}>
+  <Card title="Keyboard Shortcuts" icon="keyboard">
+    Use keyboard shortcuts in the video player for quick controls:
+    - **Space**: Play/Pause
+    - **Arrow Keys**: Seek forward/backward
+    - **F**: Fullscreen
+    - **M**: Mute/Unmute
+  </Card>
 
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
+  <Card title="Mobile Experience" icon="mobile">
+    AniDev is fully responsive! Access your account on any device:
+    - Responsive design optimized for mobile, tablet, and desktop
+    - Smooth transitions and adaptive layouts
+    - Same features across all platforms
+  </Card>
 
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
+  <Card title="Search History" icon="clock">
+    Your recent searches are automatically saved:
+    - Quick access to previous searches
+    - Clear history anytime from search settings
+  </Card>
 
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Progress Tracking" icon="chart-line">
+    Monitor your anime journey:
+    - Visual progress bars on episode lists
+    - Watch history in your profile
+    - Resume playback from any device
+  </Card>
 </CardGroup>
 
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>
+## Need Help?
+
+If you encounter any issues:
+
+<Warning>
+  Make sure your browser supports modern web standards. AniDev works best on:
+  - Chrome/Edge 90+
+  - Firefox 88+
+  - Safari 14+
+</Warning>
+
+For technical support or feature requests, visit our GitHub repository or contact support through the platform.
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Installation Guide" icon="code" href="/installation">
+    Want to run AniDev locally? Check out our developer installation guide.
+  </Card>
+  
+  <Card title="API Reference" icon="book">
+    Explore AniDev's API endpoints for building integrations.
+  </Card>
+</CardGroup>

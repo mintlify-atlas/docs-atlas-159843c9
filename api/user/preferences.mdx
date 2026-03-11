@@ -1,0 +1,379 @@
+---
+title: 'User Preferences'
+description: 'Save and manage user preferences and settings'
+---
+
+# User Preferences
+
+Save user preferences including theme customization, parental controls, and other personalization settings.
+
+## Endpoint
+
+```
+POST /api/saveUserPreferences
+```
+
+## Authentication
+
+<Warning>
+  **Authentication Required**
+  
+  This endpoint requires a valid user session. Include session cookies with your request.
+</Warning>
+
+## Request Body
+
+<ParamField body="enfasiscolor" type="string">
+  User's preferred accent/emphasis color in hexadecimal format.
+  
+  Used to customize the theme and UI elements throughout the application.
+  
+  **Example:** `"#FF5733"`, `"#3498db"`
+</ParamField>
+
+<ParamField body="parentalControl" type="boolean">
+  Enable or disable parental control features.
+  
+  - `true`: Enable content filtering for family-friendly viewing
+  - `false`: Disable parental controls
+  
+  When enabled, adult content and mature-rated anime will be filtered from search results and recommendations.
+</ParamField>
+
+## Response
+
+### Success Response
+
+**Status Code:** `200 OK`
+
+<ResponseField name="success" type="boolean">
+  Always `true` for successful requests.
+</ResponseField>
+
+<ResponseField name="data" type="object">
+  Updated user preferences object containing the saved settings.
+</ResponseField>
+
+<CodeGroup>
+```json Success Response
+{
+  "success": true,
+  "data": {
+    "user_id": "550e8400-e29b-41d4-a716-446655440000",
+    "enfasiscolor": "#FF5733",
+    "parentalControl": true,
+    "updated_at": "2026-03-11T10:30:00Z"
+  }
+}
+```
+</CodeGroup>
+
+### Error Response
+
+**Status Code:** `401 Unauthorized` or `500 Internal Server Error`
+
+<CodeGroup>
+```json Unauthorized
+{
+  "error": "Unauthorized",
+  "status": 401
+}
+```
+</CodeGroup>
+
+## Examples
+
+<CodeGroup>
+```javascript JavaScript
+async function saveUserPreferences(accentColor, parentalControl) {
+  const response = await fetch('/api/saveUserPreferences', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+    body: JSON.stringify({
+      enfasiscolor: accentColor,
+      parentalControl: parentalControl
+    })
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to save preferences');
+  }
+  
+  return await response.json();
+}
+
+// Usage
+await saveUserPreferences('#3498db', false);
+```
+
+```typescript TypeScript
+interface UserPreferences {
+  enfasiscolor?: string;
+  parentalControl?: boolean;
+}
+
+interface PreferencesResponse {
+  success: boolean;
+  data: {
+    user_id: string;
+    enfasiscolor: string;
+    parentalControl: boolean;
+    updated_at: string;
+  };
+}
+
+async function saveUserPreferences(
+  preferences: UserPreferences
+): Promise<PreferencesResponse> {
+  const response = await fetch('/api/saveUserPreferences', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+    body: JSON.stringify(preferences)
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to save preferences');
+  }
+  
+  return await response.json();
+}
+
+// Usage with type safety
+const result = await saveUserPreferences({
+  enfasiscolor: '#FF5733',
+  parentalControl: true
+});
+```
+
+```jsx React Hook
+import { useState } from 'react';
+
+function useUserPreferences() {
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
+  
+  const savePreferences = async (enfasiscolor, parentalControl) => {
+    setSaving(true);
+    setError(null);
+    
+    try {
+      const response = await fetch('/api/saveUserPreferences', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ enfasiscolor, parentalControl })
+      });
+      
+      if (!response.ok) throw new Error('Save failed');
+      
+      const data = await response.json();
+      return data;
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setSaving(false);
+    }
+  };
+  
+  return { savePreferences, saving, error };
+}
+
+// Usage in component
+function PreferencesSettings() {
+  const { savePreferences, saving } = useUserPreferences();
+  const [color, setColor] = useState('#FF5733');
+  const [parental, setParental] = useState(false);
+  
+  const handleSave = async () => {
+    await savePreferences(color, parental);
+    alert('Preferences saved!');
+  };
+  
+  return (
+    <div>
+      <input 
+        type="color" 
+        value={color} 
+        onChange={(e) => setColor(e.target.value)} 
+      />
+      <label>
+        <input 
+          type="checkbox" 
+          checked={parental} 
+          onChange={(e) => setParental(e.target.checked)} 
+        />
+        Enable Parental Control
+      </label>
+      <button onClick={handleSave} disabled={saving}>
+        {saving ? 'Saving...' : 'Save Preferences'}
+      </button>
+    </div>
+  );
+}
+```
+
+```bash cURL
+curl -X POST "https://yourdomain.com/api/saveUserPreferences" \
+  -H "Content-Type: application/json" \
+  -b cookies.txt \
+  -d '{
+    "enfasiscolor": "#FF5733",
+    "parentalControl": true
+  }'
+```
+
+```python Python
+import requests
+
+def save_user_preferences(
+    accent_color: str,
+    parental_control: bool,
+    session_cookies: dict
+) -> dict:
+    response = requests.post(
+        'https://yourdomain.com/api/saveUserPreferences',
+        json={
+            'enfasiscolor': accent_color,
+            'parentalControl': parental_control
+        },
+        cookies=session_cookies
+    )
+    
+    response.raise_for_status()
+    return response.json()
+
+# Usage
+result = save_user_preferences(
+    accent_color='#3498db',
+    parental_control=False,
+    session_cookies={'session': 'your-session-token'}
+)
+print(result)
+```
+</CodeGroup>
+
+## Preference Details
+
+### Accent Color (enfasiscolor)
+
+The accent color is used throughout the application to personalize the user interface:
+
+- **Navigation highlights**
+- **Button colors**
+- **Link colors**
+- **Progress indicators**
+- **Interactive elements**
+
+<Note>
+  The accent color should be provided in hexadecimal format (e.g., `#FF5733`). The application automatically adjusts contrast and generates complementary colors for optimal readability.
+</Note>
+
+### Parental Control
+
+When parental control is enabled:
+
+- **Content Filtering**: Mature-rated anime (R-17+, R+, Rx) are filtered from:
+  - Search results
+  - Homepage recommendations
+  - Trending lists
+  - Genre browsing
+- **Visual Indicators**: Family-friendly content is prioritized
+- **Safe Browsing**: Explicit content warnings are enforced
+
+<CodeGroup>
+```javascript Example: Theme Customization
+// Applying saved preferences to UI
+const applyUserTheme = (enfasiscolor) => {
+  // Set CSS custom property
+  document.documentElement.style.setProperty(
+    '--accent-color',
+    enfasiscolor
+  );
+  
+  // Generate complementary colors
+  const lighter = adjustColorBrightness(enfasiscolor, 20);
+  const darker = adjustColorBrightness(enfasiscolor, -20);
+  
+  document.documentElement.style.setProperty(
+    '--accent-color-light',
+    lighter
+  );
+  document.documentElement.style.setProperty(
+    '--accent-color-dark',
+    darker
+  );
+};
+
+function adjustColorBrightness(hex, percent) {
+  // Color adjustment logic
+  const num = parseInt(hex.replace('#', ''), 16);
+  const amt = Math.round(2.55 * percent);
+  const R = (num >> 16) + amt;
+  const G = (num >> 8 & 0x00FF) + amt;
+  const B = (num & 0x0000FF) + amt;
+  return '#' + (
+    0x1000000 +
+    (R < 255 ? (R < 1 ? 0 : R) : 255) * 0x10000 +
+    (G < 255 ? (G < 1 ? 0 : G) : 255) * 0x100 +
+    (B < 255 ? (B < 1 ? 0 : B) : 255)
+  ).toString(16).slice(1);
+}
+```
+</CodeGroup>
+
+## State Management Integration
+
+<CodeGroup>
+```javascript Zustand Store
+import { create } from 'zustand';
+
+const useGlobalUserPreferences = create((set) => ({
+  enfasis: '#FF5733',
+  parentalControl: false,
+  
+  setEnfasis: (color) => {
+    set({ enfasis: color });
+    // Persist to backend
+    fetch('/api/saveUserPreferences', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ enfasiscolor: color })
+    });
+  },
+  
+  setParentalControl: (enabled) => {
+    set({ parentalControl: enabled });
+    // Persist to backend
+    fetch('/api/saveUserPreferences', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ parentalControl: enabled })
+    });
+  }
+}));
+
+export default useGlobalUserPreferences;
+```
+</CodeGroup>
+
+## Best Practices
+
+1. **Debounce Updates**: When updating colors with a color picker, debounce API calls to avoid excessive requests
+2. **Optimistic Updates**: Update UI immediately, then sync with backend
+3. **Error Handling**: Provide clear feedback when preference updates fail
+4. **Validation**: Validate hex colors client-side before sending to API
+5. **Persistence**: Store preferences in local state management for immediate access
+
+## Related Endpoints
+
+- [User Collections](/api/user/collections) - Manage anime collections
+- [Upload Image](/api/media/upload-image) - Upload profile images

@@ -1,0 +1,228 @@
+---
+title: 'Image Proxy'
+description: 'Proxy and optimize images with resizing, format conversion, and quality control'
+---
+
+# Image Proxy
+
+Proxy endpoint for fetching and optimizing images with support for resizing, format conversion (WebP/AVIF), and quality adjustment.
+
+## Endpoint
+
+```
+GET /api/proxy
+```
+
+## Authentication
+
+No authentication required.
+
+## Query Parameters
+
+<ParamField query="url" type="string" required>
+  The URL of the image to proxy and optimize. Must be a valid HTTP/HTTPS URL.
+  
+  <Warning>
+    `blob:` URLs are not supported on the server. Use `POST /api/proxy` with the Blob as the request body instead.
+  </Warning>
+</ParamField>
+
+<ParamField query="w" type="number" default="0">
+  Target width for the image in pixels. When set to `0` or omitted, the original width is preserved.
+  
+  The image is resized maintaining aspect ratio.
+</ParamField>
+
+<ParamField query="q" type="number" default="50">
+  Image quality from 1 to 100.
+  - `1`: Lowest quality, smallest file size
+  - `100`: Highest quality, largest file size
+  
+  Values outside this range are automatically clamped.
+</ParamField>
+
+<ParamField query="format" type="string" default="webp">
+  Output image format:
+  - `webp`: WebP format (default, good compression and browser support)
+  - `avif`: AVIF format (better compression, newer format)
+</ParamField>
+
+## Response
+
+### Success Response
+
+**Status Code:** `200 OK`
+
+**Headers:**
+
+<ResponseField name="Content-Type" type="string">
+  MIME type of the optimized image:
+  - `image/webp` for WebP format
+  - `image/avif` for AVIF format
+</ResponseField>
+
+<ResponseField name="Content-Length" type="string">
+  Size of the optimized image in bytes.
+</ResponseField>
+
+<ResponseField name="Cache-Control" type="string">
+  Set to `public, max-age=31536000, immutable` for aggressive caching (1 year).
+</ResponseField>
+
+**Body:** Binary image data
+
+### Error Response
+
+**Status Code:** `400 Bad Request`, `404 Not Found`, or `500 Internal Server Error`
+
+<CodeGroup>
+```json Missing URL
+{
+  "error": "Missing image URL",
+  "status": 400
+}
+```
+
+```json Blob URL Error
+{
+  "error": "blob: URLs are not fetchable on the server. Use POST /api/proxy with the Blob as the request body.",
+  "status": 400
+}
+```
+
+```json Timeout Error
+{
+  "error": "Proxy timeout",
+  "status": 500
+}
+```
+</CodeGroup>
+
+## Examples
+
+<CodeGroup>
+```bash cURL
+# Basic usage
+curl "https://yourdomain.com/api/proxy?url=https://example.com/image.jpg"
+
+# With resizing and quality
+curl "https://yourdomain.com/api/proxy?url=https://example.com/image.jpg&w=800&q=80&format=webp"
+```
+
+```javascript JavaScript
+// Fetch optimized image
+const imageUrl = 'https://example.com/large-image.jpg';
+const optimizedUrl = `/api/proxy?url=${encodeURIComponent(imageUrl)}&w=400&q=75&format=webp`;
+
+const response = await fetch(optimizedUrl);
+const blob = await response.blob();
+const objectUrl = URL.createObjectURL(blob);
+
+// Use in image element
+document.querySelector('img').src = objectUrl;
+```
+
+```jsx React Component
+import { Picture } from '@components/Picture';
+
+function OptimizedImage({ imageUrl, alt }) {
+  const proxyUrl = `/api/proxy?url=${encodeURIComponent(imageUrl)}&w=600&q=80`;
+  
+  return (
+    <img 
+      src={proxyUrl}
+      alt={alt}
+      loading="lazy"
+    />
+  );
+}
+```
+
+```python Python
+import requests
+
+image_url = 'https://example.com/image.jpg'
+params = {
+    'url': image_url,
+    'w': 800,
+    'q': 80,
+    'format': 'webp'
+}
+
+response = requests.get(
+    'https://yourdomain.com/api/proxy',
+    params=params
+)
+
+if response.status_code == 200:
+    with open('optimized_image.webp', 'wb') as f:
+        f.write(response.content)
+```
+</CodeGroup>
+
+## Caching
+
+The image proxy implements a multi-level caching strategy:
+
+1. **Server-side Cache (Redis)**: Optimized images are cached for 24 hours with a key based on URL and optimization parameters
+2. **Request Deduplication**: Concurrent requests for the same image are deduplicated to prevent redundant processing
+3. **Browser Cache**: `Cache-Control` header set to 1 year for immutable resources
+4. **Timeout Protection**: 20-second timeout prevents hanging requests
+
+<Note>
+  Changing any query parameter (`url`, `w`, `q`, `format`) creates a new cache entry, allowing multiple optimized versions of the same source image.
+</Note>
+
+## Performance Optimization Tips
+
+<CodeGroup>
+```html Responsive Images
+<!-- Use different sizes for different viewports -->
+<picture>
+  <source 
+    media="(max-width: 640px)" 
+    srcset="/api/proxy?url=https://example.com/image.jpg&w=640&q=75&format=webp"
+  >
+  <source 
+    media="(max-width: 1024px)" 
+    srcset="/api/proxy?url=https://example.com/image.jpg&w=1024&q=75&format=webp"
+  >
+  <img 
+    src="/api/proxy?url=https://example.com/image.jpg&w=1920&q=80&format=webp" 
+    alt="Responsive image"
+  >
+</picture>
+```
+
+```javascript Modern Format Detection
+// Use AVIF for supported browsers, fallback to WebP
+const supportsAvif = await (async () => {
+  const avif = 'data:image/avif;base64,AAAAIGZ0eXBhdmlmAAAAAGF2aWZtaWYxbWlhZk1BMUIAAADybWV0YQAAAAAAAAAoaGRscgAAAAAAAAAAcGljdAAAAAAAAAAAAAAAAGxpYmF2aWYAAAAADnBpdG0AAAAAAAEAAAAeaWxvYwAAAABEAAABAAEAAAABAAABGgAAAB0AAAAoaWluZgAAAAAAAQAAABppbmZlAgAAAAABAABhdjAxQ29sb3IAAAAAamlwcnAAAABLaXBjbwAAABRpc3BlAAAAAAAAAAIAAAACAAAAEHBpeGkAAAAAAwgICAAAAAxhdjFDgQ0MAAAAABNjb2xybmNseAACAAIAAYAAAAAXaXBtYQAAAAAAAAABAAEEAQKDBAAAACVtZGF0EgAKCBgANogQEAwgMg8f8D///8WfhwB8+ErK42A=';
+  const img = new Image();
+  img.src = avif;
+  await img.decode();
+  return img.width === 2;
+})();
+
+const format = supportsAvif ? 'avif' : 'webp';
+const imageUrl = `/api/proxy?url=${url}&w=800&q=80&format=${format}`;
+```
+</CodeGroup>
+
+## Use Cases
+
+- **Image Optimization**: Reduce bandwidth and improve page load times
+- **Responsive Images**: Generate multiple sizes from a single source
+- **Format Modernization**: Convert legacy formats to modern WebP/AVIF
+- **Thumbnail Generation**: Create thumbnails on-the-fly
+- **CORS Bypass**: Access images from domains with restrictive CORS policies
+- **CDN Alternative**: Cache and serve optimized images without a separate CDN
+
+<Warning>
+  The proxy has a 20-second timeout. Very large images or slow source servers may cause timeout errors.
+</Warning>
+
+## Related Endpoints
+
+- [Video Proxy](/api/media/video-proxy) - Proxy video content
+- [Upload Image](/api/media/upload-image) - Upload images to the platform

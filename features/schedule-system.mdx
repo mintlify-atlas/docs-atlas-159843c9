@@ -1,0 +1,351 @@
+---
+title: Schedule System
+description: Stay up-to-date with upcoming anime releases and airing schedules
+icon: calendar
+---
+
+## Anime Release Calendar
+
+Never miss a new episode with AniDev's schedule system. Track when your favorite anime air and discover what's releasing each day of the week.
+
+<CardGroup cols={2}>
+  <Card title="Weekly Schedule" icon="calendar-week">
+    See what anime airs each day of the week
+  </Card>
+  <Card title="Upcoming Releases" icon="clock">
+    Track upcoming episodes and new series
+  </Card>
+  <Card title="Time Zone Support" icon="earth-americas">
+    Display times in your local time zone
+  </Card>
+  <Card title="Calendar View" icon="calendar-days">
+    Visual calendar layout for easy planning
+  </Card>
+</CardGroup>
+
+## Accessing the Schedule
+
+View the anime schedule from:
+
+- **Schedule Page**: Navigate to `/schedule` for the full calendar
+- **Homepage**: See today's releases in the schedule widget
+- **Navigation Menu**: Quick access from the main navigation
+
+<Steps>
+  <Step title="Navigate to Schedule">
+    Click "Schedule" in the navigation bar or visit `/schedule`
+  </Step>
+  
+  <Step title="Select a Day">
+    Click on any day of the week to see anime airing that day
+  </Step>
+  
+  <Step title="View Details">
+    Click on any anime card to see more information about the series
+  </Step>
+  
+  <Step title="Add to Collection">
+    Bookmark anime you want to watch from the schedule view
+  </Step>
+</Steps>
+
+## Weekly Calendar Layout
+
+The schedule displays anime organized by day of the week:
+
+<Tabs>
+  <Tab title="Sunday">
+    All anime that air on Sundays, with episode numbers and air times
+  </Tab>
+  <Tab title="Monday">
+    Monday releases including new episodes and premieres
+  </Tab>
+  <Tab title="Tuesday">
+    Tuesday's anime schedule with series information
+  </Tab>
+  <Tab title="Wednesday">
+    Midweek releases and ongoing series
+  </Tab>
+  <Tab title="Thursday">
+    Thursday anime lineup with episode details
+  </Tab>
+  <Tab title="Friday">
+    Friday releases to kick off your weekend
+  </Tab>
+  <Tab title="Saturday">
+    Saturday anime schedule and new episodes
+  </Tab>
+</Tabs>
+
+### Day Selection
+
+The calendar uses a tabbed interface:
+
+- **Default**: Sunday is selected by default
+- **Active Indicator**: Current day highlighted with your accent color
+- **Click to Switch**: Click any day to view its schedule
+- **Keyboard Navigation**: Use arrow keys to navigate between days
+
+```typescript
+// Schedule store manages selected day
+const { calendarList, setCalendarList } = useCalendarListStore()
+
+interface CalendarDay {
+  label: string        // e.g., "Sunday"
+  selected: boolean    // Current selection state
+}
+```
+
+## Schedule Information
+
+For each anime in the schedule, you'll see:
+
+### Basic Info
+
+- **Anime Title**: Full series name
+- **Episode Number**: Which episode is airing
+- **Air Time**: When the episode releases (in your time zone)
+- **Poster Image**: Anime cover art
+- **Status**: Airing, premiere, or finale indicators
+
+### Additional Details
+
+- **Synopsis**: Brief description of the anime
+- **Genre Tags**: Categories and themes
+- **Studio**: Production studio
+- **Rating**: User score
+- **Episode Count**: Total episodes (if known)
+
+<Tip>
+  Hover over any anime card in the schedule to see a quick preview with synopsis and additional details.
+</Tip>
+
+## Filtering Schedule Results
+
+Refine what you see in the schedule:
+
+### By Status
+
+- **Currently Airing**: Only ongoing series
+- **New Releases**: Premiering series
+- **Returning**: Series returning from hiatus
+- **Finals**: Series airing final episodes
+
+### By Genre
+
+Filter schedule by genres:
+- Action, Adventure, Comedy, Drama
+- Fantasy, Romance, Sci-Fi
+- And more...
+
+### By Your Collections
+
+Show only anime you're tracking:
+- **In My Lists**: Anime from your collections
+- **Watching**: Currently watching series
+- **Planned**: From your "To Watch" list
+
+<Note>
+  Schedule filtering uses the same filter system as the search page. Apply your filters and they'll be remembered for your next visit.
+</Note>
+
+## Time Zone Support
+
+Air times are displayed in your local time zone:
+
+### Automatic Detection
+
+- Browser automatically detects your time zone
+- Air times converted from JST (Japan Standard Time)
+- 12-hour or 24-hour format based on your locale
+
+### Manual Override
+
+Set your preferred time zone:
+
+1. Go to profile settings
+2. Select "Time Zone Preferences"
+3. Choose your time zone from the list
+4. Save changes
+
+<Accordion title="How are air times calculated?">
+  Anime typically air in Japan (JST/UTC+9). AniDev converts these times to your local time zone using your browser's time zone settings or your manually selected preference.
+</Accordion>
+
+## Upcoming Releases
+
+See what's coming soon:
+
+### This Week
+
+- All episodes airing in the current week
+- New series premieres
+- Season finales
+- Special episodes
+
+### Next Week
+
+- Preview of upcoming week's schedule
+- New series announcements
+- Schedule changes and delays
+
+### This Season
+
+- All anime in the current season
+- Seasonal overview and trends
+- Popular airing anime
+
+<CardGroup cols={2}>
+  <Card title="Today's Releases" icon="calendar-day">
+    Quick view of today's airing anime
+  </Card>
+  <Card title="Tomorrow" icon="calendar-plus">
+    Preview tomorrow's schedule
+  </Card>
+  <Card title="This Week" icon="calendar-week">
+    Full weekly schedule at a glance
+  </Card>
+  <Card title="Next Season" icon="forward">
+    Upcoming seasonal anime
+  </Card>
+</CardGroup>
+
+## Schedule Notifications
+
+Get notified about new episodes (coming soon):
+
+- **Browser Notifications**: Desktop alerts when episodes air
+- **Email Reminders**: Daily or weekly schedule emails
+- **Push Notifications**: Mobile app notifications
+- **Custom Alerts**: Set reminders for specific anime
+
+<Note>
+  Notification features are planned for a future update. Stay tuned!
+</Note>
+
+## Using Schedule with Collections
+
+Integration with your anime collections:
+
+### Auto-Add to Watching
+
+When you watch an anime from the schedule:
+
+1. Episode plays in video player
+2. Anime automatically added to "Watching" collection
+3. Schedule highlights series you're watching
+4. Next episode appears in "Continue Watching"
+
+### Schedule Badges
+
+Your collections show schedule info:
+
+- **New Episode Badge**: When a new episode airs
+- **Airing Day**: Display which day it airs
+- **Next Episode Countdown**: Time until next episode
+
+## Mobile Schedule View
+
+The schedule is optimized for mobile:
+
+<CardGroup cols={2}>
+  <Card title="Swipe Navigation" icon="hand">
+    Swipe left/right to switch between days
+  </Card>
+  <Card title="Compact Cards" icon="mobile">
+    Touch-friendly anime cards
+  </Card>
+  <Card title="Quick Actions" icon="bolt">
+    One-tap to add to collections or start watching
+  </Card>
+  <Card title="Offline Support" icon="wifi">
+    Schedule cached for offline viewing
+  </Card>
+</CardGroup>
+
+## Schedule Data Source
+
+Schedule information comes from:
+
+- **MyAnimeList**: Primary source for air dates and times
+- **AniList**: Supplementary data and episode details
+- **Official Sources**: Studio announcements and updates
+- **Community Reports**: User-submitted corrections
+
+### Update Frequency
+
+- **Daily Updates**: Schedule refreshed every 24 hours
+- **Real-time Changes**: Delays and changes updated immediately
+- **Season Updates**: New season schedules added 2-4 weeks in advance
+
+<Tip>
+  If you notice incorrect information in the schedule, you can report it through the feedback system.
+</Tip>
+
+## Schedule API
+
+The schedule uses the day filter:
+
+```
+GET /api/animes/full?aired_day_filter={day}
+```
+
+**Example**:
+```
+GET /api/animes/full?aired_day_filter=sunday&status_filter=currently+airing
+```
+
+This returns all anime currently airing on Sundays.
+
+## Frequently Asked Questions
+
+<Accordion title="Why are some anime missing from the schedule?">
+  Anime may be missing if:
+  - They haven't announced an air date yet
+  - They're not currently airing (finished or upcoming)
+  - They're OVA/movie releases (not weekly series)
+  - Data hasn't been updated yet
+  
+  The schedule shows currently airing TV anime with confirmed weekly broadcast times.
+</Accordion>
+
+<Accordion title="Are the air times accurate?">
+  Air times are sourced from official data and converted to your local time zone. However, last-minute schedule changes by broadcasters may not be immediately reflected. We update the schedule daily to minimize discrepancies.
+</Accordion>
+
+<Accordion title="Can I see past episodes in the schedule?">
+  The schedule is designed to show current and upcoming episodes. For past episodes, use the anime detail page or your watch history.
+</Accordion>
+
+<Accordion title="What does 'delayed' mean on the schedule?">
+  'Delayed' indicates that the scheduled episode has been postponed. The new air date will be shown when announced by the broadcaster. Common reasons include special programming, holidays, or production issues.
+</Accordion>
+
+<Accordion title="How do I add anime to my calendar app?">
+  Calendar export features (iCal, Google Calendar) are planned for a future update. Currently, the schedule is only viewable within AniDev.
+</Accordion>
+
+## Schedule State Management
+
+The schedule uses Zustand for day selection:
+
+```typescript
+const { calendarList, setCalendarList } = useCalendarListStore()
+
+// Calendar list structure:
+[
+  { label: 'Sunday', selected: true },
+  { label: 'Monday', selected: false },
+  { label: 'Tuesday', selected: false },
+  { label: 'Wednesday', selected: false },
+  { label: 'Thursday', selected: false },
+  { label: 'Friday', selected: false },
+  { label: 'Saturday', selected: false }
+]
+```
+
+The selected day determines which anime are displayed from the schedule API.
+
+<Note>
+  Schedule preferences (selected day, applied filters) are saved in your browser session and restored when you return.
+</Note>

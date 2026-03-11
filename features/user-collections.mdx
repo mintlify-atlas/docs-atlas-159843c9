@@ -1,0 +1,267 @@
+---
+title: User Collections
+description: Organize your anime into personal collections and track what you want to watch
+icon: bookmark
+---
+
+## Personal Anime Lists
+
+Keep track of your anime journey with customizable collections. Organize what you're watching, plan your next binge, and celebrate your completed series.
+
+<CardGroup cols={2}>
+  <Card title="Multiple Lists" icon="list-check">
+    Organize anime across four different collection types
+  </Card>
+  <Card title="Quick Add" icon="plus">
+    Add anime to your collections with one click
+  </Card>
+  <Card title="Progress Tracking" icon="chart-line">
+    See your watching progress at a glance
+  </Card>
+  <Card title="Cloud Sync" icon="cloud">
+    Your collections sync across all devices
+  </Card>
+</CardGroup>
+
+## Collection Types
+
+AniDev provides four built-in collection categories to organize your anime:
+
+<Tabs>
+  <Tab title="To Watch">
+    Your watchlist of anime you plan to watch. Add series you're interested in to keep them organized and easily accessible.
+    
+    **Icon**: Bookmark icon  
+    **Default**: Selected by default
+  </Tab>
+  
+  <Tab title="Collection">
+    Your main anime collection. Add any anime you want to keep track of or have interest in.
+    
+    **Icon**: Collection folder icon  
+    **Use for**: General anime you like or want to remember
+  </Tab>
+  
+  <Tab title="Completed">
+    Anime you've finished watching. Mark series as completed to track your accomplishments.
+    
+    **Icon**: Checkmark icon  
+    **Benefit**: See how many series you've completed
+  </Tab>
+  
+  <Tab title="Watching">
+    Anime you're currently watching. Keep track of series you're actively following.
+    
+    **Icon**: Play icon  
+    **Auto-updated**: Automatically updated when you watch episodes
+  </Tab>
+</Tabs>
+
+## Managing Your Collections
+
+<Steps>
+  <Step title="Create an Account">
+    Sign up for AniDev to start building your collections. Collections require authentication to sync across devices.
+  </Step>
+  
+  <Step title="Add Anime to Collections">
+    Click the bookmark/collection button on any anime card or detail page to add it to a collection.
+  </Step>
+  
+  <Step title="Choose Collection Type">
+    Select which list to add the anime to: To Watch, Collection, Completed, or Watching.
+  </Step>
+  
+  <Step title="View Your Collections">
+    Navigate to `/collection/{collection-type}` or access from your profile to view and manage your lists.
+  </Step>
+</Steps>
+
+<Note>
+  Collections are tied to your user account and require authentication. Make sure you're signed in to access this feature.
+</Note>
+
+## Adding Anime to Collections
+
+There are multiple ways to add anime to your collections:
+
+### From Anime Details Page
+
+1. Open any anime's detail page
+2. Click the collection/bookmark button
+3. Select which list to add it to
+4. Confirmation toast appears
+
+### From Search Results
+
+1. Hover over any anime card in search results
+2. Click the quick-add button
+3. Anime is added to your default collection
+
+### While Watching
+
+1. Watch any episode
+2. Anime is automatically added to "Watching" list
+3. Progress is tracked automatically
+
+<Tip>
+  Anime you're actively watching are automatically added to your "Watching" collection when you start an episode.
+</Tip>
+
+## Viewing Your Collections
+
+Access your collections from:
+
+- **Profile Page**: See an overview of all collections
+- **Collection Pages**: View specific lists at `/collection/{type}`
+- **Navigation Menu**: Quick access from the main navigation
+
+### Collection Display
+
+Each collection shows:
+
+- **Anime Cards**: Visual grid of your anime
+- **Episode Count**: Total episodes for each series
+- **Status**: Airing status and your watch progress
+- **Quick Actions**: Play next episode, remove from collection
+- **Sort Options**: Order by recently added, alphabetical, rating
+
+## Collection Data Structure
+
+Collections are stored with the following information:
+
+```typescript
+interface Collection {
+  title: string           // Collection name (e.g., "To Watch")
+  query: string          // Database query identifier
+  animes_ids: number[]   // Array of anime MAL IDs
+}
+
+interface WatchList {
+  id: string             // Unique collection entry ID
+  user_id: string        // User's unique ID
+  anime_id: string       // Anime MAL ID
+  type: string           // Collection type
+  // ... plus all anime card info (title, image, etc.)
+}
+```
+
+## Managing Collection Items
+
+### Remove from Collection
+
+1. Navigate to the collection containing the anime
+2. Click the remove/trash button on the anime card
+3. Confirm removal if prompted
+4. Anime is removed from that specific collection
+
+### Move Between Collections
+
+1. Remove anime from current collection
+2. Add it to the new collection
+3. Or use the "Move to" option if available
+
+<Accordion title="Can I add the same anime to multiple collections?">
+  Yes! The same anime can exist in multiple collections. For example, you might have an anime in both "Collection" and "Completed" lists.
+</Accordion>
+
+## Collection Limits
+
+Currently, AniDev has the following collection limits:
+
+- **Collections per user**: 4 (fixed categories)
+- **Anime per collection**: Unlimited
+- **Total anime across all collections**: Unlimited
+
+<Note>
+  There are no hard limits on how many anime you can add to your collections. However, very large collections (1000+ items) may take longer to load.
+</Note>
+
+## Collection Privacy
+
+Your collections are:
+
+- **Private by default**: Only you can see your collections
+- **Account-specific**: Tied to your authenticated account
+- **Synced across devices**: Access from any device after logging in
+- **Persistent**: Collections are saved permanently (until you delete items)
+
+## Collection Icons
+
+Each collection type has a unique icon for easy identification:
+
+| Collection | Icon | Color |
+|------------|------|-------|
+| To Watch | Bookmark | Accent color |
+| Collection | Folder | Accent color |
+| Completed | Checkmark | Green |
+| Watching | Play | Accent color |
+
+## Mobile Experience
+
+Collections work seamlessly on mobile devices:
+
+<CardGroup cols={2}>
+  <Card title="Touch-Friendly" icon="hand">
+    Large tap targets for easy collection management
+  </Card>
+  <Card title="Swipe Actions" icon="hand-pointer">
+    Swipe to remove items (on supported browsers)
+  </Card>
+  <Card title="Responsive Grid" icon="grid">
+    Collection cards adapt to your screen size
+  </Card>
+  <Card title="Offline Cache" icon="database">
+    Recently viewed collections cached for offline access
+  </Card>
+</CardGroup>
+
+## Frequently Asked Questions
+
+<Accordion title="Do I need an account to use collections?">
+  Yes, collections require a user account because they're stored in our database and synced across devices. Sign up for free to start using collections.
+</Accordion>
+
+<Accordion title="What happens if I delete my account?">
+  If you delete your AniDev account, all your collections will be permanently deleted. This action cannot be undone, so make sure to export or save any important data first.
+</Accordion>
+
+<Accordion title="Can I export my collections?">
+  Collection export features are planned for a future update. Currently, collections can only be viewed within AniDev.
+</Accordion>
+
+<Accordion title="Why isn't my collection showing up?">
+  If your collection isn't appearing:
+  - Make sure you're logged into the correct account
+  - Check your internet connection (collections require server sync)
+  - Try refreshing the page
+  - Clear your browser cache if the issue persists
+</Accordion>
+
+<Accordion title="Can I share my collections with friends?">
+  Collection sharing is not currently available but is planned for a future release. For now, collections are private to your account.
+</Accordion>
+
+## Collection State Management
+
+Collections use Zustand for state management:
+
+```typescript
+// Collection store manages UI state
+const { userList, setUserList } = useUserListsStore()
+
+// User lists include:
+// - To Watch (default selected)
+// - Collection  
+// - Completed
+// - Watching
+```
+
+Each collection item includes:
+- Label (display name)
+- Icon (React component)
+- Selected state (for UI)
+
+<Tip>
+  Collections are loaded when you navigate to the collection page and cached in session storage for better performance.
+</Tip>

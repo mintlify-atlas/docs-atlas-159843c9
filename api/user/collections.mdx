@@ -1,0 +1,677 @@
+---
+title: 'User Collections'
+description: 'Manage user anime collections and watch lists'
+---
+
+# User Collections
+
+Manage user anime collections including watch lists, completed anime, and viewing progress.
+
+## Watch List Endpoints
+
+### Add to Watch List
+
+Add an anime to the user's watch list with a specific collection type.
+
+#### Endpoint
+
+```
+POST /api/user/watchList
+```
+
+#### Authentication
+
+<Warning>
+  **Authentication Required**
+  
+  This endpoint requires a valid user session. Include session cookies with your request.
+</Warning>
+
+#### Request Body
+
+<ParamField body="animeId" type="string" required>
+  The unique identifier of the anime to add to the watch list.
+</ParamField>
+
+<ParamField body="type" type="string" required>
+  The collection type/category for this anime:
+  - `"Collection"`: Main anime collection
+  - `"Completed"`: Finished watching
+  - `"To Watch"`: Plan to watch
+  - `"Watching"`: Currently watching
+</ParamField>
+
+#### Response
+
+<CodeGroup>
+```json Success Response
+{
+  "success": true,
+  "data": {
+    "message": "Anime added to watch list"
+  }
+}
+```
+
+```json Error - Missing Fields
+{
+  "error": "Missing required fields: animeId and type",
+  "status": 400
+}
+```
+</CodeGroup>
+
+---
+
+### Remove from Watch List
+
+Remove an anime from the user's watch list.
+
+#### Endpoint
+
+```
+DELETE /api/user/watchList
+```
+
+#### Authentication
+
+<Warning>
+  **Authentication Required**
+</Warning>
+
+#### Request Body
+
+<ParamField body="animeId" type="string" required>
+  The unique identifier of the anime to remove from the watch list.
+</ParamField>
+
+#### Response
+
+<CodeGroup>
+```json Success Response
+{
+  "success": true,
+  "data": {
+    "message": "Anime removed from watch list"
+  }
+}
+```
+
+```json Error - Missing Field
+{
+  "error": "Missing required field: animeId",
+  "status": 400
+}
+```
+</CodeGroup>
+
+---
+
+### Get Watch List
+
+Retrieve the user's complete watch list with all anime details.
+
+#### Endpoint
+
+```
+GET /api/user/watchList
+```
+
+#### Authentication
+
+<Warning>
+  **Authentication Required**
+</Warning>
+
+#### Response
+
+<ResponseField name="success" type="boolean">
+  Always `true` for successful requests.
+</ResponseField>
+
+<ResponseField name="data" type="array">
+  Array of anime objects in the user's watch list.
+</ResponseField>
+
+<ResponseField name="data[].id" type="string">
+  Unique identifier for the watch list entry.
+</ResponseField>
+
+<ResponseField name="data[].user_id" type="string">
+  User's unique identifier.
+</ResponseField>
+
+<ResponseField name="data[].anime_id" type="string">
+  Anime's unique identifier.
+</ResponseField>
+
+<ResponseField name="data[].type" type="string">
+  Collection type: `"Collection"`, `"Completed"`, `"To Watch"`, or `"Watching"`.
+</ResponseField>
+
+<ResponseField name="data[].title" type="string">
+  Anime title.
+</ResponseField>
+
+<ResponseField name="data[].imageUrl" type="string">
+  Anime cover image URL.
+</ResponseField>
+
+<ResponseField name="data[].rating" type="number">
+  Anime rating (0-10).
+</ResponseField>
+
+<ResponseField name="data[].episodes" type="number">
+  Total number of episodes.
+</ResponseField>
+
+<CodeGroup>
+```json Success Response
+{
+  "success": true,
+  "data": [
+    {
+      "id": "wl-123",
+      "user_id": "550e8400-e29b-41d4-a716-446655440000",
+      "anime_id": "anime-456",
+      "type": "Watching",
+      "title": "Attack on Titan",
+      "imageUrl": "https://cdn.myanimelist.net/images/anime/10/47347.jpg",
+      "rating": 9.0,
+      "episodes": 75,
+      "genres": ["Action", "Drama", "Fantasy"]
+    },
+    {
+      "id": "wl-124",
+      "user_id": "550e8400-e29b-41d4-a716-446655440000",
+      "anime_id": "anime-789",
+      "type": "Completed",
+      "title": "Death Note",
+      "imageUrl": "https://cdn.myanimelist.net/images/anime/9/9453.jpg",
+      "rating": 8.6,
+      "episodes": 37,
+      "genres": ["Mystery", "Psychological", "Thriller"]
+    }
+  ]
+}
+```
+</CodeGroup>
+
+---
+
+## Search History Endpoints
+
+### Save Search History
+
+Save a user's search query to their search history.
+
+#### Endpoint
+
+```
+POST /api/user/searchHistory
+```
+
+#### Authentication
+
+<Warning>
+  **Authentication Required**
+</Warning>
+
+#### Request Body
+
+The request body should contain the search query data to be saved.
+
+<ParamField body="query" type="string" required>
+  The search query text entered by the user.
+</ParamField>
+
+<ParamField body="timestamp" type="string">
+  ISO 8601 timestamp of when the search was performed.
+</ParamField>
+
+#### Response
+
+<CodeGroup>
+```json Success Response
+{
+  "success": true,
+  "data": {
+    "message": "Search history saved"
+  }
+}
+```
+</CodeGroup>
+
+---
+
+### Get Search History
+
+Retrieve the user's search history.
+
+#### Endpoint
+
+```
+GET /api/user/searchHistory
+```
+
+#### Authentication
+
+<Warning>
+  **Authentication Required**
+</Warning>
+
+#### Response
+
+<CodeGroup>
+```json Success Response
+{
+  "success": true,
+  "data": [
+    {
+      "id": "sh-123",
+      "user_id": "550e8400-e29b-41d4-a716-446655440000",
+      "query": "attack on titan",
+      "timestamp": "2026-03-11T10:30:00Z"
+    },
+    {
+      "id": "sh-124",
+      "user_id": "550e8400-e29b-41d4-a716-446655440000",
+      "query": "death note",
+      "timestamp": "2026-03-11T09:15:00Z"
+    }
+  ]
+}
+```
+</CodeGroup>
+
+---
+
+### Delete Search History
+
+Clear all search history for the user.
+
+#### Endpoint
+
+```
+DELETE /api/user/searchHistory
+```
+
+#### Authentication
+
+<Warning>
+  **Authentication Required**
+</Warning>
+
+#### Response
+
+<CodeGroup>
+```json Success Response
+{
+  "success": true,
+  "data": {
+    "message": "Search history deleted"
+  }
+}
+```
+</CodeGroup>
+
+---
+
+## Profile Management
+
+### Save Profile
+
+Update user profile information.
+
+#### Endpoint
+
+```
+POST /api/user/profile
+```
+
+#### Authentication
+
+<Warning>
+  **Authentication Required**
+</Warning>
+
+#### Request Body
+
+<ParamField body="name" type="string" required>
+  User's first name.
+</ParamField>
+
+<ParamField body="last_name" type="string" required>
+  User's last name.
+</ParamField>
+
+<ParamField body="birthday" type="string">
+  User's birthday in ISO 8601 format (e.g., `"1995-05-20"`).
+</ParamField>
+
+<ParamField body="gender" type="string" required>
+  User's gender: `"male"`, `"female"`, or `"other"`.
+</ParamField>
+
+<ParamField body="avatar" type="string">
+  URL to the user's avatar image.
+</ParamField>
+
+<ParamField body="favorite_animes" type="array">
+  Array of anime IDs that the user has marked as favorites.
+</ParamField>
+
+<ParamField body="favorite_genres" type="array">
+  Array of genre names the user prefers.
+</ParamField>
+
+<ParamField body="favorite_studios" type="array">
+  Array of studio names the user follows.
+</ParamField>
+
+<ParamField body="frequency" type="string">
+  How often the user watches anime (e.g., `"daily"`, `"weekly"`, `"monthly"`).
+</ParamField>
+
+<ParamField body="fanatic_level" type="string">
+  User's anime enthusiasm level (e.g., `"casual"`, `"enthusiast"`, `"hardcore"`).
+</ParamField>
+
+<ParamField body="preferred_format" type="string">
+  Preferred anime format (e.g., `"TV"`, `"Movie"`, `"OVA"`).
+</ParamField>
+
+<ParamField body="watched_animes" type="array">
+  Array of anime IDs the user has watched.
+</ParamField>
+
+#### Response
+
+<CodeGroup>
+```json Success Response
+{
+  "success": true,
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "name": "John",
+    "last_name": "Doe",
+    "email": "john.doe@example.com",
+    "birthday": "1995-05-20",
+    "gender": "male",
+    "avatar": "https://example.com/avatar.jpg",
+    "favorite_animes": ["anime-1", "anime-2"],
+    "favorite_genres": ["Action", "Drama"],
+    "favorite_studios": ["Wit Studio", "Madhouse"],
+    "frequency": "weekly",
+    "fanatic_level": "enthusiast",
+    "preferred_format": "TV",
+    "watched_animes": ["anime-1", "anime-3", "anime-5"],
+    "updated_at": "2026-03-11T10:30:00Z"
+  }
+}
+```
+</CodeGroup>
+
+---
+
+## Examples
+
+<CodeGroup>
+```javascript Add to Watch List
+async function addToWatchList(animeId, collectionType) {
+  const response = await fetch('/api/user/watchList', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({
+      animeId: animeId,
+      type: collectionType
+    })
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to add to watch list');
+  }
+  
+  return await response.json();
+}
+
+// Usage
+await addToWatchList('anime-123', 'Watching');
+```
+
+```javascript Get Watch List
+async function getWatchList() {
+  const response = await fetch('/api/user/watchList', {
+    method: 'GET',
+    credentials: 'include'
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to fetch watch list');
+  }
+  
+  const result = await response.json();
+  return result.data; // Array of anime
+}
+
+// Usage
+const watchList = await getWatchList();
+const watching = watchList.filter(anime => anime.type === 'Watching');
+const completed = watchList.filter(anime => anime.type === 'Completed');
+```
+
+```javascript Remove from Watch List
+async function removeFromWatchList(animeId) {
+  const response = await fetch('/api/user/watchList', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ animeId })
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to remove from watch list');
+  }
+  
+  return await response.json();
+}
+
+// Usage
+await removeFromWatchList('anime-123');
+```
+
+```typescript TypeScript - Complete Collection Manager
+interface WatchListItem {
+  id: string;
+  user_id: string;
+  anime_id: string;
+  type: 'Collection' | 'Completed' | 'To Watch' | 'Watching';
+  title: string;
+  imageUrl: string;
+  rating: number;
+  episodes: number;
+  genres: string[];
+}
+
+class CollectionManager {
+  async addAnime(
+    animeId: string,
+    type: WatchListItem['type']
+  ): Promise<void> {
+    const response = await fetch('/api/user/watchList', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ animeId, type })
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to add anime');
+    }
+  }
+  
+  async getCollection(): Promise<WatchListItem[]> {
+    const response = await fetch('/api/user/watchList', {
+      method: 'GET',
+      credentials: 'include'
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch collection');
+    }
+    
+    const result = await response.json();
+    return result.data;
+  }
+  
+  async moveToCompleted(animeId: string): Promise<void> {
+    // Remove from current list
+    await this.removeAnime(animeId);
+    // Add to completed
+    await this.addAnime(animeId, 'Completed');
+  }
+  
+  async removeAnime(animeId: string): Promise<void> {
+    const response = await fetch('/api/user/watchList', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ animeId })
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to remove anime');
+    }
+  }
+  
+  async getByType(
+    type: WatchListItem['type']
+  ): Promise<WatchListItem[]> {
+    const collection = await this.getCollection();
+    return collection.filter(item => item.type === type);
+  }
+}
+
+// Usage
+const manager = new CollectionManager();
+await manager.addAnime('anime-123', 'Watching');
+await manager.moveToCompleted('anime-123');
+const completed = await manager.getByType('Completed');
+```
+
+```jsx React Collection Component
+import { useState, useEffect } from 'react';
+
+function AnimeCollection() {
+  const [collection, setCollection] = useState([]);
+  const [selectedType, setSelectedType] = useState('Watching');
+  const [loading, setLoading] = useState(true);
+  
+  useEffect(() => {
+    fetchCollection();
+  }, []);
+  
+  const fetchCollection = async () => {
+    try {
+      const response = await fetch('/api/user/watchList', {
+        credentials: 'include'
+      });
+      const result = await response.json();
+      setCollection(result.data);
+    } catch (error) {
+      console.error('Failed to fetch collection:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const filteredAnime = collection.filter(
+    anime => anime.type === selectedType
+  );
+  
+  const handleAddAnime = async (animeId, type) => {
+    await fetch('/api/user/watchList', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ animeId, type })
+    });
+    fetchCollection(); // Refresh
+  };
+  
+  const handleRemoveAnime = async (animeId) => {
+    await fetch('/api/user/watchList', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ animeId })
+    });
+    fetchCollection(); // Refresh
+  };
+  
+  if (loading) return <div>Loading...</div>;
+  
+  return (
+    <div>
+      <div className="tabs">
+        {['Watching', 'Completed', 'To Watch', 'Collection'].map(type => (
+          <button
+            key={type}
+            onClick={() => setSelectedType(type)}
+            className={selectedType === type ? 'active' : ''}
+          >
+            {type}
+          </button>
+        ))}
+      </div>
+      
+      <div className="anime-grid">
+        {filteredAnime.map(anime => (
+          <div key={anime.id} className="anime-card">
+            <img src={anime.imageUrl} alt={anime.title} />
+            <h3>{anime.title}</h3>
+            <p>Rating: {anime.rating}/10</p>
+            <p>Episodes: {anime.episodes}</p>
+            <button onClick={() => handleRemoveAnime(anime.anime_id)}>
+              Remove
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+```
+</CodeGroup>
+
+## Collection Types
+
+### Collection
+Main anime collection. General purpose category for saved anime.
+
+### Completed
+Anime that the user has finished watching. Useful for tracking viewing history and generating statistics.
+
+### To Watch
+Planned anime. Build a queue of anime to watch later.
+
+### Watching
+Currently watching anime. Track active viewing progress.
+
+<Note>
+  Users can move anime between collection types by removing and re-adding with a different type, or by implementing a custom "move" function that combines both operations.
+</Note>
+
+## Best Practices
+
+1. **Optimistic UI Updates**: Update the UI immediately, then sync with the server
+2. **Error Recovery**: Provide clear feedback and retry mechanisms for failed operations
+3. **Pagination**: For large collections, implement client-side pagination or filtering
+4. **Caching**: Cache collection data locally and refresh periodically
+5. **Real-time Sync**: Consider implementing WebSocket updates for multi-device sync
+
+## Related Endpoints
+
+- [User Preferences](/api/user/preferences) - Manage user settings
+- [Upload Image](/api/media/upload-image) - Upload profile or collection images

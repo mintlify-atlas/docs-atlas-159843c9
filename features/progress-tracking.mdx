@@ -1,0 +1,311 @@
+---
+title: Progress Tracking
+description: Track your anime watching progress and never lose your place
+icon: chart-line
+---
+
+## Automatic Progress Tracking
+
+AniDev automatically tracks your watching progress across all anime, so you can pick up right where you left off.
+
+<CardGroup cols={2}>
+  <Card title="Auto-Save Progress" icon="floppy-disk">
+    Your watch progress is saved automatically as you watch
+  </Card>
+  <Card title="Episode Tracking" icon="list-ol">
+    Know exactly which episodes you've watched
+  </Card>
+  <Card title="Multi-Device Sync" icon="rotate">
+    Progress syncs across all your devices
+  </Card>
+  <Card title="Watch History" icon="clock-rotate-left">
+    View your complete watching history
+  </Card>
+</CardGroup>
+
+## How Progress Tracking Works
+
+When you watch anime on AniDev:
+
+<Steps>
+  <Step title="Start Watching">
+    Begin watching any episode. No manual action needed.
+  </Step>
+  
+  <Step title="Progress Captured">
+    As you watch, your progress (timestamp, episode number) is automatically saved.
+  </Step>
+  
+  <Step title="Episode Completion">
+    When you finish an episode, it's marked as watched in your history.
+  </Step>
+  
+  <Step title="Resume Anytime">
+    Return to the anime and resume from where you left off.
+  </Step>
+</Steps>
+
+<Note>
+  Progress tracking requires you to be signed in. Create a free account to enable this feature.
+</Note>
+
+## Watch Progress Features
+
+### Episode-Level Tracking
+
+For each anime you watch, AniDev tracks:
+
+- **Current Episode**: Which episode you're on
+- **Playback Position**: Exact timestamp within the episode
+- **Episodes Watched**: Total count of completed episodes
+- **Last Watched**: When you last watched this anime
+
+### Visual Progress Indicators
+
+Progress is displayed throughout the app:
+
+- **Progress Bars**: Visual indicator showing % completed
+- **Episode Highlighting**: Watched episodes marked with a checkmark
+- **Continue Watching**: Quick-access cards for in-progress anime
+- **Collection Status**: See progress in your collection lists
+
+<Tip>
+  Currently watching episodes are highlighted in your accent color in the episode list.
+</Tip>
+
+## Watch History
+
+Your watch history provides a complete timeline of your anime viewing:
+
+### What's Recorded
+
+- Date and time of watching
+- Anime title and episode
+- Duration watched
+- Completion status
+- Device used (desktop/mobile)
+
+### Accessing Watch History
+
+View your watch history from:
+
+1. **Profile Page**: See recent watching activity
+2. **Anime Detail Page**: View your history for specific anime
+3. **Collection Page**: See progress across all collected anime
+
+## Continue Watching
+
+Never lose your place with the "Continue Watching" feature:
+
+- **Homepage Widget**: Quick access to in-progress anime
+- **Auto-Resume**: Automatically loads your last position
+- **Smart Sorting**: Most recently watched appear first
+- **Next Episode**: Automatically suggests next episode after completion
+
+```typescript
+// Continue watching is managed via WatchList
+const { watchList, setWatchList } = useGlobalUserPreferences()
+
+interface WatchList {
+  id: string
+  user_id: string
+  anime_id: string
+  type: string        // e.g., "watching"
+  // ... plus anime info (title, image, episodes, etc.)
+}
+```
+
+## Episode Status
+
+Each episode can have one of these statuses:
+
+<CardGroup cols={3}>
+  <Card title="Unwatched" icon="circle">
+    Not yet started
+  </Card>
+  <Card title="In Progress" icon="circle-half-stroke">
+    Partially watched
+  </Card>
+  <Card title="Completed" icon="circle-check">
+    Fully watched
+  </Card>
+</CardGroup>
+
+## Progress Synchronization
+
+Your progress syncs across devices in real-time:
+
+### How Sync Works
+
+1. **Watch on Device A**: Start watching on your computer
+2. **Auto-Save**: Progress saved to cloud database
+3. **Switch to Device B**: Open AniDev on your phone
+4. **Resume**: Continue from exact same position
+
+### Sync Frequency
+
+- **During Playback**: Every 30 seconds
+- **On Pause**: Immediately
+- **On Episode Complete**: Immediately
+- **On Page Close**: Before you navigate away
+
+<Note>
+  Sync requires an active internet connection. Offline changes will sync when you reconnect.
+</Note>
+
+## Managing Your Progress
+
+### Reset Progress
+
+You can reset progress for any anime:
+
+1. Navigate to the anime detail page
+2. Click on progress settings
+3. Select "Reset Progress"
+4. Confirm the action
+
+<Accordion title="Will resetting progress delete my collection entry?">
+  No, resetting progress only clears your watch history and episode completion status. The anime remains in your collections.
+</Accordion>
+
+### Mark as Watched
+
+Manually mark episodes as watched:
+
+1. Go to the episode list
+2. Right-click (or long-press) an episode
+3. Select "Mark as Watched"
+
+### Bulk Actions
+
+Mark multiple episodes at once:
+
+- **Mark all as watched**: Useful for anime you've seen before
+- **Mark all as unwatched**: Reset entire series
+- **Mark up to episode X**: Mark all episodes up to a specific one
+
+<Tip>
+  Bulk actions are available in the episode list settings menu (three dots icon).
+</Tip>
+
+## Progress Data Storage
+
+Progress data is stored securely:
+
+- **Database**: Supabase PostgreSQL database
+- **User-Specific**: Each user's progress is isolated
+- **Encrypted**: Transmitted over HTTPS
+- **Backed Up**: Regular automatic backups
+
+### Data Retention
+
+- **Active Users**: Progress kept indefinitely
+- **Inactive Users**: Progress retained for 2 years
+- **Deleted Accounts**: Progress deleted within 30 days
+
+## Privacy & Control
+
+You have full control over your progress data:
+
+### Privacy Settings
+
+- **Private by Default**: Only you can see your progress
+- **No Sharing**: Progress is never shared without permission
+- **Export Data**: Download your complete watch history
+- **Delete Data**: Remove all progress data from our servers
+
+### Parental Control Integration
+
+When parental control is enabled:
+
+- Adult-rated anime hidden from history
+- Progress for restricted content not displayed
+- Safe search filters applied automatically
+
+```typescript
+// Parental control from user preferences
+const { parentalControl, setParentalControl } = useGlobalUserPreferences()
+
+// Automatically filters adult content when enabled
+setParentalControl(true)
+```
+
+## Mobile Progress Tracking
+
+Progress tracking works seamlessly on mobile:
+
+<CardGroup cols={2}>
+  <Card title="Background Sync" icon="sync">
+    Progress syncs even when app is in background
+  </Card>
+  <Card title="Offline Queue" icon="wifi">
+    Progress queued and synced when back online
+  </Card>
+  <Card title="Low Data Mode" icon="signal">
+    Reduced sync frequency on slow connections
+  </Card>
+  <Card title="Battery Efficient" icon="battery-full">
+    Optimized to minimize battery usage
+  </Card>
+</CardGroup>
+
+## Frequently Asked Questions
+
+<Accordion title="Why isn't my progress saving?">
+  If progress isn't saving:
+  - Make sure you're signed in to your account
+  - Check your internet connection
+  - Verify you have sufficient storage in your account
+  - Try logging out and back in
+  - Clear browser cache and cookies
+  
+  Progress requires authentication and an active network connection.
+</Accordion>
+
+<Accordion title="Can I track progress without an account?">
+  No, progress tracking requires a user account because data is stored in our cloud database to enable sync across devices. However, creating an account is free and takes less than a minute.
+</Accordion>
+
+<Accordion title="How far back does my watch history go?">
+  Your complete watch history is retained indefinitely as long as your account is active. You can view all watching activity from the day you created your account.
+</Accordion>
+
+<Accordion title="What happens if I watch the same episode twice?">
+  The most recent watch session is recorded. If you re-watch an episode, it updates the timestamp and marks it as watched again. Previous watch sessions are logged in your detailed history.
+</Accordion>
+
+<Accordion title="Can I disable progress tracking?">
+  Currently, progress tracking is automatically enabled for all authenticated users and cannot be disabled. However, you can manually reset progress for specific anime or delete your watch history at any time.
+</Accordion>
+
+<Accordion title="Does progress tracking work on all browsers?">
+  Yes, progress tracking works on all modern browsers (Chrome, Firefox, Safari, Edge) on both desktop and mobile devices. Some older browsers may have limited functionality.
+</Accordion>
+
+## Technical Details
+
+Progress tracking is implemented using:
+
+- **Zustand State Management**: Global state for watch list and progress
+- **Supabase Real-time**: Live sync across devices
+- **Session Storage**: Local caching for performance
+- **API Endpoints**: Secure progress update endpoints
+
+```typescript
+// Global watch list state
+const { watchList, setWatchList } = useGlobalUserPreferences()
+
+// Progress is updated via API
+POST /api/progress/update
+{
+  user_id: string,
+  anime_id: string,
+  episode_id: number,
+  timestamp: number,
+  completed: boolean
+}
+```
+
+<Note>
+  All progress data is transmitted securely over HTTPS and stored in compliance with data protection regulations.
+</Note>

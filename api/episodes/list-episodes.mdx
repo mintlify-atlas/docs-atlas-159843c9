@@ -1,0 +1,199 @@
+---
+title: 'List Episodes'
+api: 'GET /api/episodes'
+description: 'Retrieve a paginated list of episodes for a specific anime'
+---
+
+## Overview
+
+This endpoint returns a list of episodes for a given anime ID with pagination support. Episodes include video URLs, thumbnails, titles, and descriptions.
+
+## Authentication
+
+<Note>This endpoint does not require authentication.</Note>
+
+## Rate Limiting
+
+This endpoint is protected by rate limiting middleware:
+- **Default limit**: 100 requests per 60 seconds
+- Returns `429 Too Many Requests` when limit is exceeded
+- Includes `Retry-After` header in rate limit responses
+
+## Query Parameters
+
+<ParamField query="id" type="string" required>
+  The MyAnimeList (MAL) ID of the anime. This is a required parameter.
+  
+  **Example**: `52991` (for One Piece)
+</ParamField>
+
+<ParamField query="page" type="number" default="1">
+  The page number for pagination. Must be greater than 0.
+  
+  **Example**: `1`
+</ParamField>
+
+## Response
+
+<ResponseField name="data" type="array">
+  Array of episode objects
+  
+  <ResponseField name="id" type="string">
+    Unique identifier for the episode
+  </ResponseField>
+  
+  <ResponseField name="anime_mal_id" type="number">
+    MyAnimeList ID of the parent anime
+  </ResponseField>
+  
+  <ResponseField name="episode_id" type="number">
+    Episode number within the series
+  </ResponseField>
+  
+  <ResponseField name="video_url" type="string">
+    URL to the video stream for this episode
+  </ResponseField>
+  
+  <ResponseField name="image_url" type="string">
+    Thumbnail or preview image URL for the episode
+  </ResponseField>
+  
+  <ResponseField name="title" type="string" optional>
+    Episode title (if available)
+  </ResponseField>
+  
+  <ResponseField name="description" type="string" optional>
+    Episode description or synopsis (if available)
+  </ResponseField>
+  
+  <ResponseField name="date" type="string" optional>
+    Air date or release date of the episode (if available)
+  </ResponseField>
+</ResponseField>
+
+## Example Request
+
+<CodeGroup>
+
+```bash cURL
+curl -X GET "https://anidev.vercel.app/api/episodes?id=52991&page=1"
+```
+
+```javascript Fetch
+const response = await fetch(
+  'https://anidev.vercel.app/api/episodes?id=52991&page=1'
+);
+const data = await response.json();
+console.log(data);
+```
+
+```typescript TypeScript
+interface AnimeEpisode {
+  id: string;
+  anime_mal_id: number;
+  episode_id: number;
+  video_url: string;
+  image_url: string;
+  title?: string;
+  description?: string;
+  date?: string;
+}
+
+const fetchEpisodes = async (animeId: string, page: number = 1) => {
+  const response = await fetch(
+    `https://anidev.vercel.app/api/episodes?id=${animeId}&page=${page}`
+  );
+  const result: { data: AnimeEpisode[] } = await response.json();
+  return result.data;
+};
+```
+
+</CodeGroup>
+
+## Example Response
+
+```json
+{
+  "data": [
+    {
+      "id": "ep-52991-1",
+      "anime_mal_id": 52991,
+      "episode_id": 1,
+      "video_url": "https://example.com/video/ep1.m3u8",
+      "image_url": "https://example.com/thumbnails/ep1.jpg",
+      "title": "The Beginning",
+      "description": "The adventure starts as our hero sets sail.",
+      "date": "2024-01-01"
+    },
+    {
+      "id": "ep-52991-2",
+      "anime_mal_id": 52991,
+      "episode_id": 2,
+      "video_url": "https://example.com/video/ep2.m3u8",
+      "image_url": "https://example.com/thumbnails/ep2.jpg",
+      "title": "New Companions",
+      "description": "Meeting new friends along the journey."
+    }
+  ]
+}
+```
+
+## Error Responses
+
+### Missing ID Parameter
+
+**Status Code**: `400 Bad Request`
+
+```json
+{
+  "error": "Anime ID is required",
+  "type": "validation"
+}
+```
+
+### Invalid Page Number
+
+**Status Code**: `400 Bad Request`
+
+```json
+{
+  "error": "Page number must be greater than 0",
+  "type": "validation"
+}
+```
+
+### Rate Limit Exceeded
+
+**Status Code**: `429 Too Many Requests`
+
+```json
+{
+  "error": "Too many requests, please try again later",
+  "type": "tooManyRequests"
+}
+```
+
+<ResponseField name="Retry-After" type="header">
+  Number of seconds to wait before making another request
+</ResponseField>
+
+### Server Error
+
+**Status Code**: `500 Internal Server Error`
+
+```json
+{
+  "error": "Internal server error"
+}
+```
+
+## Implementation Details
+
+<Note>
+  This endpoint uses Redis caching to improve performance and reduce database load. Cached responses are automatically invalidated based on TTL (Time To Live) settings.
+</Note>
+
+## Related Endpoints
+
+- [Get Episode](/api/episodes/get-episode) - Retrieve a specific episode by MAL ID and episode number
+- [Get Anime](/api/anime/get-anime) - Get detailed information about an anime

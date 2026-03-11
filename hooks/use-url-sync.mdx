@@ -1,0 +1,349 @@
+---
+title: "useUrlSync"
+description: "Custom hook for synchronizing component state with URL parameters for shareable and bookmarkable search states"
+---
+
+# useUrlSync
+
+The `useUrlSync` hook provides bidirectional synchronization between application state and browser URL parameters. It enables creating shareable search URLs, maintaining state across page refreshes, and supporting browser back/forward navigation.
+
+## Type Signature
+
+```typescript
+function useUrlSync(): void
+```
+
+## Parameters
+
+This hook doesn't accept parameters. It automatically syncs with the search store state.
+
+## Return Value
+
+This hook doesn't return any value. It manages URL synchronization as a side effect.
+
+## Internal State Management
+
+The hook synchronizes the following from the search store:
+- `query` - Current search query string
+- `appliedFilters` - Object containing active filter selections
+- `setQuery` - Function to update the search query
+- `setAppliedFilters` - Function to update applied filters
+
+## Usage Examples
+
+### Basic Search Page
+
+```typescript
+import { useUrlSync } from '@hooks/useUrlSync'
+import { useSearchStoreResults } from '@search/stores/search-results-store'
+
+const SearchPage = () => {
+  const { query, appliedFilters } = useSearchStoreResults()
+  
+  // Automatically syncs query and filters with URL
+  useUrlSync()
+
+  return (
+    <div>
+      <SearchBar />
+      <FilterPanel />
+      <SearchResults />
+    </div>
+  )
+}
+```
+
+### Shareable Search URLs
+
+```typescript
+const AnimeSearch = () => {
+  const { query, appliedFilters } = useSearchStoreResults()
+  useUrlSync()
+
+  const shareCurrentSearch = () => {
+    // URL is automatically maintained by useUrlSync
+    const url = window.location.href
+    navigator.clipboard.writeText(url)
+    toast.success('Search URL copied to clipboard!')
+  }
+
+  return (
+    <div>
+      <SearchInterface />
+      <button onClick={shareCurrentSearch}>Share Search</button>
+    </div>
+  )
+}
+```
+
+### Filter-Based Navigation
+
+```typescript
+const AnimeDiscovery = () => {
+  const { appliedFilters, setAppliedFilters } = useSearchStoreResults()
+  useUrlSync()
+
+  const applyGenreFilter = (genre: string) => {
+    setAppliedFilters({
+      ...appliedFilters,
+      genre_filter: [genre],
+    })
+    // URL automatically updates to:
+    // /search?genre_filter=action
+  }
+
+  return (
+    <div>
+      <button onClick={() => applyGenreFilter('action')}>Action</button>
+      <button onClick={() => applyGenreFilter('comedy')}>Comedy</button>
+    </div>
+  )
+}
+```
+
+### Multiple Filter Categories
+
+```typescript
+const AdvancedSearch = () => {
+  const { appliedFilters, setAppliedFilters } = useSearchStoreResults()
+  useUrlSync()
+
+  const applyFilters = () => {
+    setAppliedFilters({
+      genre_filter: ['action', 'adventure'],
+      year_filter: ['2023', '2024'],
+      status_filter: ['airing'],
+      type_filter: ['tv'],
+    })
+    // URL becomes:
+    // /search?genre_filter=action,adventure&year_filter=2023,2024&status_filter=airing&type_filter=tv
+  }
+
+  return <button onClick={applyFilters}>Apply Filters</button>
+}
+```
+
+### Restoring State from URL
+
+```typescript
+const BookmarkableSearch = () => {
+  // On initial mount, useUrlSync reads URL parameters
+  // and populates the search store automatically
+  useUrlSync()
+
+  const { query, appliedFilters } = useSearchStoreResults()
+
+  // If user visits: /search?q=naruto&genre_filter=action
+  // Then:
+  // - query will be "naruto"
+  // - appliedFilters will be { genre_filter: ['action'] }
+
+  return (
+    <div>
+      <h1>Search Results for: {query}</h1>
+      <ActiveFilters filters={appliedFilters} />
+    </div>
+  )
+}
+```
+
+### Browser Navigation Support
+
+```typescript
+const SearchWithHistory = () => {
+  useUrlSync()
+  const { query } = useSearchStoreResults()
+
+  // User performs searches:
+  // 1. Searches for "naruto" -> URL: /search?q=naruto
+  // 2. Searches for "one piece" -> URL: /search?q=one+piece
+  // 3. Clicks browser back button
+  // 
+  // useUrlSync automatically detects the popstate event
+  // and updates the store to show "naruto" results again
+
+  return <SearchResults query={query} />
+}
+```
+
+## URL Format
+
+### Query Parameter
+
+Search queries are stored in the `q` parameter:
+```
+/search?q=attack+on+titan
+```
+
+### Filter Parameters
+
+Filters use their key names as parameter names:
+```
+/search?q=anime&genre_filter=action&year_filter=2023
+```
+
+### Multiple Values
+
+Multiple filter values are comma-separated:
+```
+/search?genre_filter=action,adventure,fantasy
+```
+
+### Complete Example
+
+```
+/search?q=isekai&genre_filter=action,fantasy&year_filter=2023,2024&status_filter=airing&type_filter=tv
+```
+
+This URL represents:
+- Search query: "isekai"
+- Genres: Action, Fantasy
+- Years: 2023, 2024
+- Status: Currently Airing
+- Type: TV Series
+
+## Features
+
+### Bidirectional Sync
+
+<Tabs>
+  <Tab title="State → URL">
+    When application state changes, the URL updates automatically:
+    ```typescript
+    setQuery('naruto')
+    setAppliedFilters({ genre_filter: ['action'] })
+    // URL becomes: /search?q=naruto&genre_filter=action
+    ```
+  </Tab>
+  <Tab title="URL → State">
+    When URL changes (back/forward navigation), state updates:
+    ```typescript
+    // User clicks browser back button
+    // URL changes from /search?q=naruto to /search?q=one+piece
+    // Store automatically updates to show "one piece" results
+    ```
+  </Tab>
+</Tabs>
+
+### Initial State Restoration
+
+On component mount, the hook reads URL parameters and populates the store:
+
+```typescript
+// User visits: /search?q=anime&genre_filter=action
+// useUrlSync automatically calls:
+// setQuery('anime')
+// setAppliedFilters({ genre_filter: ['action'] })
+```
+
+### Debouncing
+
+The hook prevents excessive URL history entries by comparing previous and current state:
+
+```typescript
+// Only creates a new history entry if state actually changed
+if (JSON.stringify(newUrlState) !== JSON.stringify(lastUrlState.current)) {
+  window.history.pushState({ path: newUrl }, '', newUrl)
+}
+```
+
+### Browser Navigation
+
+Supports browser back/forward buttons via `popstate` event listener:
+
+```typescript
+window.addEventListener('popstate', handlePopState)
+```
+
+## Use Cases
+
+- **Shareable search results** - Users can share search URLs with friends
+- **Bookmarkable filters** - Save specific filter combinations
+- **Browser navigation** - Back/forward buttons work as expected
+- **Deep linking** - Direct links to specific search states
+- **State persistence** - Maintains search state on page refresh
+- **Analytics tracking** - Track search patterns via URL parameters
+- **Social sharing** - Share filtered anime lists on social media
+
+## Best Practices
+
+### Clear URL on Reset
+
+```typescript
+const clearFilters = () => {
+  setQuery('')
+  setAppliedFilters({})
+  // URL becomes: /search (clean URL)
+}
+```
+
+### Validate URL Parameters
+
+```typescript
+const validateFilters = (filters: Record<string, string[]>) => {
+  const validGenres = ['action', 'comedy', 'drama', 'fantasy']
+  
+  if (filters.genre_filter) {
+    filters.genre_filter = filters.genre_filter.filter(g => 
+      validGenres.includes(g)
+    )
+  }
+  
+  return filters
+}
+```
+
+### Provide Default Values
+
+```typescript
+const SearchWithDefaults = () => {
+  const { query, appliedFilters } = useSearchStoreResults()
+  useUrlSync()
+
+  useEffect(() => {
+    // If no filters are applied, set defaults
+    if (Object.keys(appliedFilters).length === 0) {
+      setAppliedFilters({
+        status_filter: ['airing'],
+        type_filter: ['tv'],
+      })
+    }
+  }, [])
+}
+```
+
+<Note>
+  The hook automatically handles URL encoding/decoding for special characters in search queries and filter values.
+</Note>
+
+## Performance
+
+- **Prevents duplicate history entries** through state comparison
+- **Debounces URL updates** to avoid excessive history pollution
+- **Efficient event handling** with proper cleanup
+- **Minimal re-renders** using refs for tracking state
+
+<Tip>
+  Combine with `useDebounce` for search queries to prevent URL updates on every keystroke:
+  ```typescript
+  const [search, setSearch] = useState('')
+  const debouncedSearch = useDebounce(search, 300)
+  
+  useEffect(() => {
+    setQuery(debouncedSearch)
+  }, [debouncedSearch])
+  
+  useUrlSync()
+  ```
+</Tip>
+
+## SEO Benefits
+
+- **Crawlable URLs** - Search engines can index different filter combinations
+- **Canonical URLs** - Each search state has a unique URL
+- **Social sharing** - Rich previews for shared search results
+- **Analytics** - Track popular searches and filter combinations
+
+## Source
+
+Location: `src/domains/shared/hooks/useUrlSync.ts:27`

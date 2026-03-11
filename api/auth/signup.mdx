@@ -1,0 +1,384 @@
+---
+title: 'Sign Up'
+api: 'POST /api/auth/signup'
+description: 'Register a new user account with email and password'
+---
+
+## Overview
+
+This endpoint creates a new user account using Supabase Authentication with the PKCE flow. Upon successful registration, the user is automatically signed in and receives session tokens.
+
+## Authentication
+
+<Note>This endpoint does not require authentication (it creates the authentication).</Note>
+
+## Rate Limiting
+
+This endpoint is protected by rate limiting middleware:
+- **Default limit**: 100 requests per 60 seconds
+- Returns `429 Too Many Requests` when limit is exceeded
+- Prevents abuse and spam account creation
+
+## Request Body
+
+<ParamField body="email" type="string" required>
+  User's email address. Must be a valid email format.
+  
+  **Example**: `user@example.com`
+</ParamField>
+
+<ParamField body="password" type="string" required>
+  User's password. Should meet security requirements (minimum length, complexity, etc.).
+  
+  **Example**: `SecurePass123!`
+</ParamField>
+
+<ParamField body="user_name" type="string" required>
+  Username or display name for the user. This will be stored in user metadata.
+  
+  **Example**: `AnimeWatcher123`
+</ParamField>
+
+## Response
+
+<ResponseField name="data" type="object">
+  Registration result containing user and session information
+  
+  <ResponseField name="user" type="object">
+    User information
+    
+    <ResponseField name="name" type="string">
+      User's display name from metadata
+    </ResponseField>
+    
+    <ResponseField name="avatar" type="string">
+      User's avatar URL from metadata (may be null for new accounts)
+    </ResponseField>
+  </ResponseField>
+  
+  <ResponseField name="session" type="object">
+    Session tokens and metadata
+    
+    <ResponseField name="access_token" type="string">
+      JWT access token for authenticated requests
+    </ResponseField>
+    
+    <ResponseField name="refresh_token" type="string">
+      Token used to refresh the access token when it expires
+    </ResponseField>
+    
+    <ResponseField name="expires_in" type="number">
+      Time in seconds until the access token expires
+    </ResponseField>
+    
+    <ResponseField name="expires_at" type="number">
+      Unix timestamp when the access token expires
+    </ResponseField>
+    
+    <ResponseField name="token_type" type="string">
+      Type of token (typically "bearer")
+    </ResponseField>
+  </ResponseField>
+</ResponseField>
+
+## Cookies Set
+
+<Note>
+  Upon successful registration, the following HTTP-only cookies are automatically set:
+</Note>
+
+<ResponseField name="sb-access-token" type="cookie">
+  **Attributes**: HttpOnly, Secure, SameSite=Lax, Max-Age=7 days
+  
+  Contains the Supabase access token for authenticated requests
+</ResponseField>
+
+<ResponseField name="sb-refresh-token" type="cookie">
+  **Attributes**: HttpOnly, Secure, SameSite=Lax, Max-Age=7 days
+  
+  Contains the Supabase refresh token to maintain the session
+</ResponseField>
+
+## Example Request
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST "https://anidev.vercel.app/api/auth/signup" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "SecurePass123!",
+    "user_name": "AnimeWatcher123"
+  }'
+```
+
+```javascript Fetch
+const response = await fetch('https://anidev.vercel.app/api/auth/signup', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    email: 'user@example.com',
+    password: 'SecurePass123!',
+    user_name: 'AnimeWatcher123'
+  }),
+  credentials: 'include' // Important: Include cookies
+});
+
+const data = await response.json();
+console.log(data);
+```
+
+```typescript TypeScript
+interface SignUpRequest {
+  email: string;
+  password: string;
+  user_name: string;
+}
+
+interface SignUpResponse {
+  data: {
+    user: {
+      name: string;
+      avatar: string | null;
+    };
+    session: {
+      access_token: string;
+      refresh_token: string;
+      expires_in: number;
+      expires_at: number;
+      token_type: string;
+    };
+  };
+}
+
+const signUp = async (credentials: SignUpRequest): Promise<SignUpResponse> => {
+  const response = await fetch('https://anidev.vercel.app/api/auth/signup', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(credentials),
+    credentials: 'include'
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error);
+  }
+
+  return response.json();
+};
+```
+
+```javascript React Example
+import { useState } from 'react';
+
+function SignUpForm() {
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    user_name: ''
+  });
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+        credentials: 'include'
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        // Successfully signed up!
+        console.log('Welcome,', result.data.user.name);
+        window.location.href = '/';
+      } else {
+        setError(result.error);
+      }
+    } catch (err) {
+      setError('Failed to sign up. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <input
+        type="email"
+        placeholder="Email"
+        value={formData.email}
+        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+        required
+      />
+      <input
+        type="text"
+        placeholder="Username"
+        value={formData.user_name}
+        onChange={(e) => setFormData({ ...formData, user_name: e.target.value })}
+        required
+      />
+      <input
+        type="password"
+        placeholder="Password"
+        value={formData.password}
+        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+        required
+      />
+      {error && <div className="error">{error}</div>}
+      <button type="submit" disabled={loading}>
+        {loading ? 'Signing up...' : 'Sign Up'}
+      </button>
+    </form>
+  );
+}
+```
+
+</CodeGroup>
+
+## Example Response
+
+```json
+{
+  "data": {
+    "user": {
+      "name": "AnimeWatcher123",
+      "avatar": null
+    },
+    "session": {
+      "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+      "refresh_token": "v1.MRjyg-VNJ8H7zN...",
+      "expires_in": 3600,
+      "expires_at": 1710987654,
+      "token_type": "bearer"
+    }
+  }
+}
+```
+
+## Error Responses
+
+### Missing Required Fields
+
+**Status Code**: `400 Bad Request`
+
+```json
+{
+  "error": "Email, password and username are required",
+  "type": "validation"
+}
+```
+
+### Invalid Email Format
+
+**Status Code**: `400 Bad Request`
+
+```json
+{
+  "error": "Invalid email format",
+  "type": "validation"
+}
+```
+
+### Email Already Registered
+
+**Status Code**: `409 Conflict`
+
+```json
+{
+  "error": "User with this email already exists",
+  "type": "conflict"
+}
+```
+
+### Weak Password
+
+**Status Code**: `400 Bad Request`
+
+```json
+{
+  "error": "Password should be at least 6 characters",
+  "type": "validation"
+}
+```
+
+### Rate Limit Exceeded
+
+**Status Code**: `429 Too Many Requests`
+
+```json
+{
+  "error": "Too many requests, please try again later",
+  "type": "tooManyRequests"
+}
+```
+
+<ResponseField name="Retry-After" type="header">
+  Number of seconds to wait before making another request
+</ResponseField>
+
+### Server Error
+
+**Status Code**: `500 Internal Server Error`
+
+```json
+{
+  "error": "Internal server error"
+}
+```
+
+## Security Features
+
+<Warning>
+  **Important Security Notes:**
+  - Passwords are hashed using Supabase's secure hashing algorithms
+  - Session tokens are stored in HTTP-only cookies to prevent XSS attacks
+  - Cookies use the Secure flag (HTTPS only) and SameSite=Lax for CSRF protection
+  - Rate limiting prevents brute force and spam attacks
+</Warning>
+
+## User Metadata
+
+The following metadata is stored with the user account:
+
+- `user_name`: Display name provided during registration
+- `avatar_url`: Profile picture URL (null by default, can be updated later)
+
+This metadata is accessible through the Supabase user object and can be updated using the profile management endpoints.
+
+## Post-Registration Flow
+
+After successful registration:
+
+1. **User Record Created**: A new user record is created in Supabase Auth
+2. **Public Profile**: A corresponding record is created in the `public_users` table
+3. **Session Established**: Access and refresh tokens are generated
+4. **Cookies Set**: Session tokens are stored in HTTP-only cookies
+5. **Auto Sign-In**: User is automatically signed in and can make authenticated requests
+
+## Next Steps
+
+After signing up, users can:
+
+- Update their profile with [Update Profile](/api/user/update-profile)
+- Upload an avatar image
+- Start building their anime collection
+- Save their preferences and watch history
+
+## Related Endpoints
+
+- [Sign In](/api/auth/signin) - Sign in to an existing account
+- [Update Profile](/api/user/update-profile) - Update user profile information
+- [Get Profile](/api/user/profile) - Retrieve user profile data

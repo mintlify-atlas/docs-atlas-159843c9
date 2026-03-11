@@ -1,0 +1,424 @@
+---
+title: 'Installation'
+description: 'Set up AniDev locally for development - complete installation guide with prerequisites and configuration'
+---
+
+This guide will help you set up AniDev on your local machine for development purposes.
+
+## Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+<CardGroup cols={2}>
+  <Card title="Node.js" icon="node-js">
+    **Version 18.x or higher**
+    
+    AniDev is tested on Node.js v24.13.1. Download from [nodejs.org](https://nodejs.org/)
+  </Card>
+
+  <Card title="Package Manager" icon="box">
+    **pnpm (recommended)**
+    
+    Install pnpm: `npm install -g pnpm`
+    
+    Also compatible with npm and yarn
+  </Card>
+
+  <Card title="Supabase Account" icon="database">
+    **Free account required**
+    
+    Sign up at [supabase.com](https://supabase.com) for database and authentication
+  </Card>
+
+  <Card title="Redis (Optional)" icon="server">
+    **For caching**
+    
+    Redis is optional but recommended for optimal performance
+  </Card>
+</CardGroup>
+
+<Note>
+  AniDev uses **Astro v5.16.8** with server-side rendering. Make sure your environment supports SSR.
+</Note>
+
+## Installation Steps
+
+<Steps>
+  <Step title="Clone the Repository">
+    Clone the AniDev repository to your local machine:
+
+    <CodeGroup>
+      ```bash HTTPS
+      git clone https://github.com/your-username/anidev.git
+      cd anidev
+      ```
+
+      ```bash SSH
+      git clone git@github.com:your-username/anidev.git
+      cd anidev
+      ```
+    </CodeGroup>
+  </Step>
+
+  <Step title="Install Dependencies">
+    Install all required dependencies using your preferred package manager:
+
+    <CodeGroup>
+      ```bash pnpm
+      pnpm install
+      ```
+
+      ```bash npm
+      npm install
+      ```
+
+      ```bash yarn
+      yarn install
+      ```
+    </CodeGroup>
+
+    <Tip>
+      We recommend using **pnpm** for faster installation and better disk space efficiency. The project includes pnpm-specific configurations.
+    </Tip>
+
+    This will install all dependencies including:
+    - **Astro 5.16.8** - Web framework
+    - **React 19.2.3** - UI library
+    - **TailwindCSS 4.1.10** - Styling
+    - **Supabase 2.90.1** - Backend and authentication
+    - **Vidstack** - Video player
+    - **Zustand** - State management
+    - And many more (see `package.json` for full list)
+  </Step>
+
+  <Step title="Configure Environment Variables">
+    Create a `.env` file in the root directory with the following variables:
+
+    ```bash .env
+    # Supabase Configuration (Required)
+    SUPABASE_URL=your_supabase_project_url
+    SUPABASE_ANON_KEY=your_supabase_anon_key
+    SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+
+    # Authentication (Required)
+    AUTH_SECRET=your_random_auth_secret
+
+    # Redis Configuration (Optional - for caching)
+    REDIS_PASSWORD=your_redis_password
+
+    # Pinata Configuration (Optional - for IPFS image storage)
+    PINATA_JWT=your_pinata_jwt_token
+
+    # Gateway URL (Optional)
+    GATEWAY_URL=your_gateway_url
+
+    # Sentry (Optional - for error tracking)
+    SENTRY_DSN=your_sentry_dsn
+    SENTRY_AUTH_TOKEN=your_sentry_auth_token
+    ```
+
+    <Warning>
+      **Required Environment Variables:**
+      - `SUPABASE_URL` - Your Supabase project URL
+      - `SUPABASE_ANON_KEY` - Your Supabase anonymous key
+      - `SUPABASE_SERVICE_ROLE_KEY` - Your Supabase service role key (keep this secret!)
+      - `AUTH_SECRET` - A random string for session encryption
+    </Warning>
+
+    ### Getting Supabase Credentials
+
+    1. Create a new project at [supabase.com](https://supabase.com)
+    2. Go to **Project Settings** → **API**
+    3. Copy your project URL and keys:
+       - **URL**: `https://your-project.supabase.co`
+       - **anon/public key**: Used for client-side operations
+       - **service_role key**: Used for admin operations (keep secret!)
+
+    ### Generating AUTH_SECRET
+
+    Generate a secure random string:
+
+    <CodeGroup>
+      ```bash openssl
+      openssl rand -base64 32
+      ```
+
+      ```bash node
+      node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+      ```
+    </CodeGroup>
+
+    <Note>
+      **Optional Services:**
+      - **Redis**: Improves API performance with caching. Run locally with Docker or use a cloud provider.
+      - **Pinata**: Used for decentralized image storage via IPFS.
+      - **Sentry**: Error tracking and monitoring for production.
+    </Note>
+  </Step>
+
+  <Step title="Set Up the Database">
+    AniDev uses Supabase for data storage. You'll need to set up your database schema:
+
+    1. Run migrations (if provided) or manually create tables in Supabase
+    2. Configure Row Level Security (RLS) policies for authentication
+    3. Set up necessary database functions and RPC endpoints
+
+    <Tip>
+      Check the `/src/libs/supabase.ts` file to understand the database client configuration and available operations.
+    </Tip>
+  </Step>
+
+  <Step title="Start the Development Server">
+    Start the local development server:
+
+    <CodeGroup>
+      ```bash pnpm
+      pnpm dev
+      ```
+
+      ```bash npm
+      npm run dev
+      ```
+
+      ```bash yarn
+      yarn dev
+      ```
+    </CodeGroup>
+
+    The application will start on **http://localhost:4321**
+
+    <Note>
+      The dev server uses Astro's development mode with hot module replacement (HMR) for fast iteration.
+    </Note>
+  </Step>
+</Steps>
+
+## Available Scripts
+
+AniDev includes several npm scripts for development and production:
+
+| Script | Command | Description |
+|--------|---------|-------------|
+| **Development** | `pnpm dev` | Start development server on port 4321 |
+| **Build** | `pnpm build` | Type check with Astro and build for production |
+| **Preview** | `pnpm preview` | Preview production build locally |
+| **Start** | `pnpm start` | Start production server (after build) |
+| **Test** | `pnpm test` | Run Vitest test suite |
+| **Format** | `pnpm format` | Format code with Biome and Prettier |
+| **Release** | `pnpm release` | Create a new version with standard-version |
+
+<CodeGroup>
+  ```bash Development
+  pnpm dev
+  # Starts on http://localhost:4321
+  ```
+
+  ```bash Production Build
+  pnpm build
+  # Creates optimized build in ./dist/
+  ```
+
+  ```bash Preview Build
+  pnpm preview
+  # Preview production build locally
+  ```
+
+  ```bash Run Tests
+  pnpm test
+  # Run unit and integration tests with Vitest
+  ```
+</CodeGroup>
+
+## Project Structure
+
+Understanding the codebase structure:
+
+```plaintext
+anidev/
+├── src/
+│   ├── components/          # Reusable UI components
+│   │   ├── anime-info/     # Anime details components
+│   │   ├── auth/           # Authentication components
+│   │   ├── nav-bar/        # Navigation components
+│   │   ├── profile/        # User profile components
+│   │   └── watch-anime/    # Video player components
+│   ├── domains/            # Domain-driven design modules
+│   │   ├── auth/          # Authentication domain
+│   │   ├── anime/         # Anime domain
+│   │   ├── user/          # User domain
+│   │   └── watch/         # Watch/streaming domain
+│   ├── hooks/             # Custom React hooks
+│   ├── layouts/           # Astro layouts
+│   ├── libs/              # External integrations
+│   │   ├── supabase.ts   # Supabase client
+│   │   ├── redis.ts      # Redis client
+│   │   └── pinata.ts     # Pinata client
+│   ├── middlewares/       # API middlewares
+│   │   ├── auth.ts       # Auth middleware
+│   │   └── rate-limit.ts # Rate limiting
+│   ├── pages/            # Astro pages (routes)
+│   │   ├── api/         # API endpoints
+│   │   ├── anime/       # Anime pages
+│   │   ├── profile/     # User profile
+│   │   └── watch/       # Video player
+│   ├── store/            # Zustand state management
+│   ├── styles/           # Global styles
+│   ├── test/            # Test files
+│   ├── types/           # TypeScript definitions
+│   └── utils/           # Helper functions
+├── public/              # Static assets
+├── astro.config.mjs     # Astro configuration
+├── tailwind.config.js   # TailwindCSS config
+├── tsconfig.json        # TypeScript config
+└── package.json         # Dependencies and scripts
+```
+
+## Development Tips
+
+<CardGroup cols={2}>
+  <Card title="Hot Reload" icon="bolt">
+    The dev server automatically reloads when you save changes. No need to manually refresh!
+  </Card>
+
+  <Card title="Type Safety" icon="shield-check">
+    Run `pnpm astro check` to verify TypeScript types before building.
+  </Card>
+
+  <Card title="Code Quality" icon="code">
+    Use `pnpm format` to auto-format code with Biome and Prettier before committing.
+  </Card>
+
+  <Card title="Testing" icon="flask">
+    Write tests in `/src/test/` using Vitest. Run with `pnpm test`.
+  </Card>
+</CardGroup>
+
+## Common Issues
+
+<Warning>
+  **Port 4321 already in use?**
+  
+  Kill the process using the port or change the port in `astro.config.mjs`:
+  ```js
+  server: {
+    port: 3000, // Change to your preferred port
+    host: '0.0.0.0'
+  }
+  ```
+</Warning>
+
+<Warning>
+  **Module not found errors?**
+  
+  AniDev uses path aliases. Check `tsconfig.json` for alias mappings:
+  - `@components/*` → `src/components/*`
+  - `@hooks/*` → `src/hooks/*`
+  - `@utils/*` → `src/utils/*`
+  - `@auth/*` → `src/domains/auth/*`
+  - `@anime/*` → `src/domains/anime/*`
+  - And more...
+</Warning>
+
+<Warning>
+  **Supabase connection errors?**
+  
+  Verify your `.env` file:
+  1. Check that SUPABASE_URL is correct (no trailing slash)
+  2. Verify SUPABASE_ANON_KEY is valid
+  3. Ensure your Supabase project is active
+</Warning>
+
+## Building for Production
+
+<Steps>
+  <Step title="Run Type Check and Build">
+    ```bash
+    pnpm build
+    ```
+    
+    This command:
+    1. Runs `astro check` to verify TypeScript types
+    2. Builds the project for production with optimizations
+    3. Outputs to `./dist/` directory
+  </Step>
+
+  <Step title="Test Production Build">
+    ```bash
+    pnpm preview
+    ```
+    
+    Preview your production build locally before deploying.
+  </Step>
+
+  <Step title="Deploy">
+    AniDev is configured for deployment on **Vercel** with Node.js adapter:
+    
+    - Output mode: `server` (SSR enabled)
+    - Adapter: `@astrojs/node` in standalone mode
+    - Site URL: `https://anidev.app`
+    
+    Simply connect your Git repository to Vercel and deploy!
+    
+    <Note>
+      Make sure to set all environment variables in your deployment platform's settings.
+    </Note>
+  </Step>
+</Steps>
+
+## Redis Setup (Optional)
+
+For optimal performance with caching:
+
+<CodeGroup>
+  ```bash Docker
+  # Run Redis locally with Docker
+  docker run -d -p 6379:6379 --name anidev-redis redis:alpine
+  ```
+
+  ```bash Docker with Password
+  # Run Redis with authentication
+  docker run -d -p 6379:6379 --name anidev-redis \
+    redis:alpine redis-server --requirepass your_password
+  ```
+</CodeGroup>
+
+Then add to `.env`:
+```bash
+REDIS_PASSWORD=your_password
+```
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Architecture" icon="sitemap">
+    Learn about AniDev's domain-driven architecture and design patterns
+  </Card>
+  
+  <Card title="API Documentation" icon="code">
+    Explore available API endpoints and integration options
+  </Card>
+  
+  <Card title="Contributing" icon="users">
+    Check the contribution guidelines to start contributing to AniDev
+  </Card>
+  
+  <Card title="Testing Guide" icon="vial">
+    Learn how to write and run tests for components and APIs
+  </Card>
+</CardGroup>
+
+## Need Help?
+
+If you encounter issues during installation:
+
+- Check the [GitHub Issues](https://github.com/your-username/anidev/issues)
+- Review the [README.md](https://github.com/your-username/anidev) for additional context
+- Join the community discussions
+
+<Tip>
+  For the best development experience, use VS Code with recommended extensions:
+  - Astro extension
+  - TypeScript and JavaScript Language Features
+  - Tailwind CSS IntelliSense
+  - Prettier
+</Tip>

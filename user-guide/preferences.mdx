@@ -1,0 +1,458 @@
+---
+title: User Preferences
+description: Customize your AniDev experience with personal settings and preferences
+icon: sliders
+---
+
+## Overview
+
+Personalize your AniDev experience with customizable preferences including theme colors, parental controls, search history tracking, and content filtering.
+
+## Accessing Preferences
+
+Your user preferences can be accessed from:
+- Your profile page at `/profile`
+- The settings menu in the navigation bar
+- Quick settings panel (if available)
+
+Preferences are stored both locally in your browser and synced to your account for cross-device consistency.
+
+## Theme Customization
+
+Customize the visual appearance of AniDev to match your style.
+
+### Accent Color
+
+Change the emphasis color that appears throughout the interface.
+
+<Steps>
+  <Step title="Open Color Picker">
+    Navigate to your settings and find the "Accent Color" or "Emphasis Color" option.
+  </Step>
+
+  <Step title="Select Your Color">
+    Click the color selector to open the color picker. Choose any color from the spectrum.
+    
+    The default color is `#0057E7` (blue).
+  </Step>
+
+  <Step title="Apply Changes">
+    Your selected color is immediately applied to:
+    - Accent bars and borders
+    - Button highlights
+    - Active navigation items
+    - Progress indicators
+    - Interactive elements
+  </Step>
+</Steps>
+
+### Color Picker Component
+
+**Component**: `src/domains/user/components/user-settings/select-color.tsx`
+
+```typescript
+export const SelectColor = () => {
+  const { enfasis, setEnfasis } = useGlobalUserPreferences()
+
+  const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const color = e.target.value
+    setEnfasis(color)                      // Update global state
+    localStorage.setItem('enfasis', color)  // Persist to localStorage
+  }
+
+  return (
+    <input
+      type="color"
+      value={enfasis}
+      onChange={handleColorChange}
+      className="h-10 w-10 cursor-pointer rounded-lg"
+    />
+  )
+}
+```
+
+<Note>
+  Your accent color preference is stored in localStorage under the key `enfasis` and synced with your user preferences in the database.
+</Note>
+
+## Parental Control
+
+Enable parental control to filter age-inappropriate content.
+
+<Steps>
+  <Step title="Toggle Parental Control">
+    From settings, find the "Parental Control" toggle switch.
+  </Step>
+
+  <Step title="Enable/Disable">
+    Click the toggle to enable or disable parental controls.
+    
+    When enabled:
+    - Content is filtered based on age ratings
+    - Mature/explicit content is hidden
+    - Family-friendly viewing experience
+  </Step>
+
+  <Step title="Save Preference">
+    Your preference is automatically saved and applied across all pages.
+  </Step>
+</Steps>
+
+### Parental Control Component
+
+**Component**: `src/domains/user/components/user-settings/parental-control.tsx`
+
+```typescript
+export const ParentalControl = () => {
+  const { parentalControl, setParentalControl } = useGlobalUserPreferences()
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const checked = e.target.checked
+    setParentalControl(checked)
+    localStorage.setItem('parental_control', JSON.stringify(checked))
+  }
+
+  return (
+    <label className="relative inline-flex cursor-pointer items-center">
+      <input
+        type="checkbox"
+        checked={parentalControl ?? true}  // Default: enabled
+        onChange={handleChange}
+        className="peer sr-only"
+      />
+      {/* Toggle switch UI */}
+    </label>
+  )
+}
+```
+
+<Warning>
+  Parental control is enabled by default (`parentalControl ?? true`). When you first sign up, content filtering is automatically active to ensure a safe viewing experience.
+</Warning>
+
+## Search History
+
+Control whether AniDev tracks your search history.
+
+### Tracking Search History
+
+When enabled, AniDev tracks:
+- Recent search queries
+- Search timestamps
+- Popular searches for quick access
+- Search suggestions based on history
+
+**Store**: `src/domains/user/stores/user-store.ts`
+
+```typescript
+interface GlobalUserPreferences {
+  trackSearchHistory: boolean
+  setTrackSearchHistory: (value: boolean) => void
+  // Other preferences...
+}
+```
+
+Default: `true` (tracking enabled)
+
+### Clearing Search History
+
+To clear your search history:
+
+1. Navigate to user settings
+2. Find the "Search History" section
+3. Click "Clear Search History" button
+4. Confirm the action
+
+**Component**: `src/domains/user/components/user-settings/search-history.tsx`
+
+This removes all saved search queries from your profile.
+
+## User Preferences Storage
+
+AniDev uses a dual-storage approach for preferences:
+
+### Local Storage
+
+Stored in browser localStorage for immediate access:
+- `enfasis` - Accent color value
+- `parental_control` - Parental control state (as JSON boolean)
+- `trackSearchHistory` - Search history tracking preference
+
+### Database Storage
+
+Persisted to Supabase for cross-device sync:
+- User preferences are stored in the `public_users` table
+- Synced on sign-in and when preferences change
+- Ensures consistent experience across devices
+
+### Saving Preferences API
+
+**Service**: `src/domains/user/services/preferences.ts`
+
+```typescript
+export const updatePreferences = async (
+  userId: string,
+  enfasisColor?: string,
+  parentalControl?: boolean
+): Promise<ApiResponse<any>> => {
+  // Validates at least one preference is provided
+  const data = await UserRepository.updatePreferences(
+    userId,
+    enfasisColor,
+    parentalControl
+  )
+  return { data }
+}
+```
+
+**Endpoint**: `POST /api/saveUserPreferences`
+
+Accepts:
+- `userId` - User ID (from session)
+- `enfasisColor` - Hex color string (optional)
+- `parentalControl` - Boolean state (optional)
+
+<Note>
+  At least one preference field must be provided when updating preferences. The API validates this requirement.
+</Note>
+
+## Loading User Preferences
+
+When you sign in, preferences are automatically loaded.
+
+**Component**: `src/domains/user/components/user-settings/load-user-preferences.tsx`
+
+The loading process:
+
+<Steps>
+  <Step title="Check Authentication">
+    Verify user is signed in and has a valid session.
+  </Step>
+
+  <Step title="Fetch from Database">
+    Retrieve user preferences from the `public_users` table.
+  </Step>
+
+  <Step title="Merge with Local Storage">
+    Combine database preferences with local storage values.
+    Database values take precedence for signed-in users.
+  </Step>
+
+  <Step title="Apply to UI">
+    Update the global state store with loaded preferences.
+    All components re-render with new preference values.
+  </Step>
+</Steps>
+
+## Global User Preferences Store
+
+All preferences are managed through a Zustand store for reactive updates.
+
+**Store**: `src/domains/user/stores/user-store.ts`
+
+```typescript
+interface GlobalUserPreferences {
+  enfasis: string                          // Accent color (default: '#0057E7')
+  parentalControl: boolean | null          // Parental control state
+  trackSearchHistory: boolean              // Search tracking (default: true)
+  userInfo: UserInfo | null                // User profile data
+  watchList: WatchList[]                   // User's watch lists
+  
+  setEnfasis: (color: string) => void
+  setParentalControl: (value: boolean) => void
+  setTrackSearchHistory: (value: boolean) => void
+  setUserInfo: (user: UserInfo | null) => void
+  setWatchList: (watchList: WatchList[]) => void
+}
+```
+
+### Using Preferences in Components
+
+```typescript
+import { useGlobalUserPreferences } from '@user/stores/user-store'
+
+const MyComponent = () => {
+  const { enfasis, parentalControl, setEnfasis } = useGlobalUserPreferences()
+  
+  // Use preferences in your component
+  return (
+    <div style={{ borderColor: enfasis }}>
+      {parentalControl && <SafeContentBadge />}
+    </div>
+  )
+}
+```
+
+Components automatically re-render when preferences change.
+
+## Preference Defaults
+
+Default values when no preference is set:
+
+| Preference | Default Value | Description |
+|------------|---------------|-------------|
+| `enfasis` | `#0057E7` | Blue accent color |
+| `parentalControl` | `true` | Enabled for safety |
+| `trackSearchHistory` | `true` | Tracking enabled |
+| `userInfo` | `null` | No user data |
+| `watchList` | `[]` | Empty array |
+
+## Anime Preferences
+
+Beyond visual preferences, customize your anime discovery experience:
+
+### Content Preferences
+
+Set during sign-up (can be updated later):
+
+- **Favorite Genres**: Action, Adventure, Romance, Sci-Fi, etc.
+- **Favorite Studios**: Studio Ghibli, Mappa, ufotable, etc.
+- **Preferred Format**: TV, Movie, OVA, ONA, Special
+- **Watch Frequency**: Daily, Weekly, Monthly, Occasionally, Rarely
+- **Fanatic Level**: Casual Viewer to Hardcore Otaku
+
+These preferences influence:
+- Homepage recommendations
+- Search result rankings
+- Suggested anime lists
+- Personalized content discovery
+
+### Updating Anime Preferences
+
+Update your anime preferences through the profile editor:
+
+**Service**: `src/domains/user/services/profile.ts`
+
+```typescript
+export const saveProfile = async (
+  userId: string,
+  profileData: any
+): Promise<any> => {
+  // Maps and validates profile data
+  const mappedData: any = {}
+  
+  if (profileData.favorite_animes) 
+    mappedData.favorite_animes = profileData.favorite_animes
+  if (profileData.frequency) 
+    mappedData.frequency_of_watch = profileData.frequency
+  if (profileData.fanatic_level) 
+    mappedData.fanatic_level = profileData.fanatic_level
+  if (profileData.preferred_format) 
+    mappedData.preferred_format = profileData.preferred_format
+  if (profileData.watched_animes) 
+    mappedData.watched_animes = profileData.watched_animes
+  if (profileData.favorite_studios) 
+    mappedData.favorite_studios = profileData.favorite_studios
+  if (profileData.favorite_genres) 
+    mappedData.favorite_genres = profileData.favorite_genres
+  
+  // Save to database
+  const data = await UserRepository.upsertProfile(userId, mappedData)
+  return data
+}
+```
+
+## Preference Sync Across Devices
+
+Your preferences automatically sync when you:
+
+<Steps>
+  <Step title="Sign In">
+    Sign in to any device with your AniDev account.
+  </Step>
+
+  <Step title="Load Preferences">
+    Preferences are fetched from the database and applied to the current session.
+  </Step>
+
+  <Step title="Make Changes">
+    Update preferences on any device.
+  </Step>
+
+  <Step title="Automatic Sync">
+    Changes are saved to the database and become available on all your devices.
+  </Step>
+</Steps>
+
+<Note>
+  Preference sync requires an active internet connection and valid authentication session.
+</Note>
+
+## Privacy and Data
+
+### What's Stored
+
+AniDev stores the following preference data:
+- Visual customization (accent color)
+- Content filtering settings (parental control)
+- Search behavior (if tracking enabled)
+- Anime preferences and favorites
+- Watch history and progress
+
+### What's NOT Stored
+
+AniDev does NOT store:
+- Browsing history outside the platform
+- Personal conversations or messages
+- Payment information (if not implemented)
+- Third-party account credentials
+
+### Data Control
+
+You have full control over your data:
+- Update or delete preferences at any time
+- Clear search history whenever you want
+- Export your profile data (if implemented)
+- Delete your account and all associated data
+
+## Troubleshooting
+
+<Accordion title="Preferences not saving">
+  If your preferences aren't persisting:
+  - Ensure you're signed in to your account
+  - Check that cookies and localStorage are enabled in your browser
+  - Verify you have a stable internet connection
+  - Try clearing browser cache and signing in again
+</Accordion>
+
+<Accordion title="Accent color not applying">
+  If your chosen accent color isn't appearing:
+  - Hard refresh the page (Ctrl+Shift+R or Cmd+Shift+R)
+  - Check if the color picker shows your selected color
+  - Verify the color is being saved to localStorage
+  - Try selecting a different color to test functionality
+</Accordion>
+
+<Accordion title="Parental control not filtering content">
+  Ensure:
+  - Parental control toggle is enabled (green/active state)
+  - The setting is saved (check localStorage or database)
+  - Refresh the page to apply changes
+  - Some content may not have age ratings and won't be filtered
+</Accordion>
+
+<Accordion title="Preferences different on each device">
+  If preferences vary across devices:
+  - Verify you're signed in with the same account on all devices
+  - Ensure all devices have internet connectivity
+  - Try signing out and back in to force a preference sync
+  - Check that localStorage isn't overriding database preferences
+</Accordion>
+
+## API Reference
+
+Preference management endpoint:
+
+- `POST /api/saveUserPreferences` - Save or update user preferences
+
+Request body:
+```json
+{
+  "enfasisColor": "#FF5733",
+  "parentalControl": true
+}
+```
+
+At least one field is required.
+
+See [API Reference](/api-reference/preferences) for detailed endpoint documentation.

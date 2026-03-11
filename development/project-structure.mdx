@@ -1,0 +1,633 @@
+---
+title: "Project Structure"
+description: "Navigate AniDev's codebase organization, understand directory structure, and learn file naming conventions"
+---
+
+## Overview
+
+AniDev follows a domain-driven directory structure where related functionality is grouped into self-contained modules called "domains". This organization promotes modularity, reusability, and clear boundaries between different features.
+
+## Root Directory
+
+```plaintext
+anidev/
+├── .astro/              # Astro build artifacts
+├── .github/             # GitHub workflows and CI/CD
+├── .vscode/             # VS Code settings
+├── dist/                # Production build output
+├── node_modules/        # Dependencies
+├── public/              # Static assets
+├── src/                 # Source code (main directory)
+├── astro.config.mjs     # Astro configuration
+├── auth.config.js       # Authentication setup
+├── biome.json          # Biome linter/formatter config
+├── package.json         # Dependencies and scripts
+├── tsconfig.json        # TypeScript configuration
+└── README.md            # Project documentation
+```
+
+## Source Directory (`src/`)
+
+The heart of the application:
+
+```plaintext
+src/
+├── domains/            # Feature modules (domain-driven design)
+├── libs/               # External service integrations
+├── layouts/            # Page layout templates
+├── middlewares/        # API middleware functions
+├── pages/              # Astro pages and API routes
+├── utils/              # Shared utility functions
+├── constants.ts        # Application constants
+├── env.d.ts           # Environment type definitions
+└── types.d.ts         # Global TypeScript types
+```
+
+## Domain Structure
+
+Each domain is a self-contained module:
+
+### Complete Domain Example
+
+<Tabs>
+  <Tab title="Anime Domain">
+    ```plaintext
+    src/domains/anime/
+    ├── components/          # UI components
+    │   ├── anime-banner/
+    │   │   ├── anime-banner.tsx
+    │   │   ├── anime-banner-info.tsx
+    │   │   └── anime-banner-loader.tsx
+    │   ├── anime-card/
+    │   │   ├── anime-card.tsx
+    │   │   └── anime-detail-card.tsx
+    │   ├── anime-carousel/
+    │   ├── anime-characters/
+    │   ├── anime-collection/
+    │   └── anime-info/
+    ├── controllers/         # Request handlers
+    │   └── index.ts
+    ├── hooks/              # Custom React hooks
+    │   └── useCarouselScroll.ts
+    ├── repositories/       # Data access layer
+    │   └── index.ts
+    ├── services/           # Business logic
+    │   └── index.ts
+    ├── stores/             # State management
+    │   ├── anime-list-store.ts
+    │   └── carousel-store.ts
+    ├── styles/             # Domain-specific styles
+    ├── types/              # TypeScript types
+    │   └── index.ts
+    └── utils/              # Domain utilities
+        ├── fetch-by-format.ts
+        └── get-random-anime.ts
+    ```
+  </Tab>
+
+  <Tab title="Auth Domain">
+    ```plaintext
+    src/domains/auth/
+    ├── components/
+    │   ├── auth-form/
+    │   ├── login-button/
+    │   └── signup-form/
+    ├── controllers/
+    │   └── index.ts
+    ├── hooks/
+    │   ├── use-auth-form-state.ts
+    │   ├── use-auth-form-submission.ts
+    │   ├── use-auth-initialization.ts
+    │   ├── use-auth-open-form.ts
+    │   └── use-auth-url-sync.ts
+    ├── repositories/
+    │   └── index.ts
+    ├── services/
+    │   └── index.ts
+    ├── stores/
+    │   └── auth-store.ts
+    └── types/
+        └── index.ts
+    ```
+  </Tab>
+
+  <Tab title="Shared Domain">
+    ```plaintext
+    src/domains/shared/
+    ├── components/          # Reusable UI components
+    │   ├── buttons/
+    │   ├── error/
+    │   ├── icons/
+    │   ├── layout/
+    │   ├── media/
+    │   ├── modal/
+    │   └── ui/
+    ├── constants/
+    ├── controllers/
+    ├── errors/             # Error handling utilities
+    │   └── index.ts
+    ├── hooks/
+    │   └── image-viewer/
+    ├── repositories/
+    ├── services/
+    │   └── metadata-service.ts
+    ├── stores/
+    ├── styles/
+    ├── test/               # Shared test utilities
+    │   └── metadata-service.test.ts
+    ├── types/
+    │   ├── api-response.ts
+    │   └── index.ts
+    └── utils/
+    ```
+  </Tab>
+</Tabs>
+
+## All Domains
+
+<CardGroup cols={3}>
+  <Card title="anime" icon="tv">
+    Anime browsing, search, and details
+  </Card>
+  <Card title="artist" icon="microphone">
+    Music artists and creators
+  </Card>
+  <Card title="auth" icon="lock">
+    Authentication and authorization
+  </Card>
+  <Card title="cache" icon="database">
+    Caching strategies and Redis
+  </Card>
+  <Card title="character" icon="user">
+    Anime character information
+  </Card>
+  <Card title="collection" icon="folder">
+    User anime collections
+  </Card>
+  <Card title="download" icon="download">
+    Download management
+  </Card>
+  <Card title="music" icon="music">
+    Anime themes and soundtracks
+  </Card>
+  <Card title="recommendations" icon="sparkles">
+    AI-powered recommendations
+  </Card>
+  <Card title="schedule" icon="calendar">
+    Anime release schedules
+  </Card>
+  <Card title="search" icon="magnifying-glass">
+    Advanced search functionality
+  </Card>
+  <Card title="seiyuu" icon="microphone-lines">
+    Voice actors (seiyuu)
+  </Card>
+  <Card title="shared" icon="share-nodes">
+    Shared utilities and components
+  </Card>
+  <Card title="user" icon="user-circle">
+    User profiles and preferences
+  </Card>
+  <Card title="watch" icon="play">
+    Video playback and episodes
+  </Card>
+  <Card title="ai" icon="robot">
+    AI integration (Gemini)
+  </Card>
+  <Card title="favorites" icon="heart">
+    User favorites management
+  </Card>
+  <Card title="community" icon="users">
+    Community features
+  </Card>
+</CardGroup>
+
+## Layer Responsibilities
+
+### Components
+
+**Location:** `src/domains/{domain}/components/`
+
+```typescript src/domains/anime/components/anime-card/anime-card.tsx
+import { useDynamicBorder } from '@shared/hooks'
+
+export const AnimeCard = ({ anime }: { anime: Anime }) => {
+  const { elementRef, handleMouseMove, handleMouseEnter, handleMouseLeave } =
+    useDynamicBorder({ borderWidth: 2 })
+
+  return (
+    <div
+      ref={elementRef}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <img src={anime.image_url} alt={anime.title} />
+      <h3>{anime.title}</h3>
+    </div>
+  )
+}
+```
+
+**Naming Convention:** `{feature}-{type}.tsx`
+- `anime-card.tsx`
+- `anime-banner-loader.tsx`
+- `search-bar.tsx`
+
+### Controllers
+
+**Location:** `src/domains/{domain}/controllers/index.ts`
+
+```typescript src/domains/anime/controllers/index.ts
+export const AnimeController = {
+  // Validation
+  validateAnimeId(url: URL): string {
+    const animeId = url.searchParams.get('animeId')
+    if (!animeId) throw AppError.validation('Anime ID is required')
+    return animeId
+  },
+
+  // Request handlers
+  async handleGetAnimeById(url: URL): Promise<ApiResponse<Anime | null>> {
+    const id = url.searchParams.get('id')
+    const animeId = this.validateNumericId(id)
+    const result = await AnimeService.getById(animeId)
+    return { data: result }
+  },
+}
+```
+
+**Purpose:**
+- Parse and validate requests
+- Coordinate service calls
+- Format responses
+- Handle caching
+
+### Services
+
+**Location:** `src/domains/{domain}/services/index.ts`
+
+```typescript src/domains/anime/services/index.ts
+export const AnimeService = {
+  async getById(animeId: number, parentalControl: boolean = true) {
+    try {
+      const result = await AnimeRepository.getById(animeId, parentalControl)
+      if (!result) throw AppError.notFound('Anime not found')
+      return result
+    } catch (error: unknown) {
+      if (isAppError(error) && error.type === 'permission') {
+        throw AppError.permission('Anime restricted by parental control')
+      }
+      throw error
+    }
+  },
+}
+```
+
+**Purpose:**
+- Business logic
+- Data transformation
+- Error handling
+- Multi-repository orchestration
+
+### Repositories
+
+**Location:** `src/domains/{domain}/repositories/index.ts`
+
+```typescript src/domains/anime/repositories/index.ts
+export const AnimeRepository = {
+  async getById(animeId: number, parentalControl: boolean = false) {
+    const { data, error } = await supabase.rpc('get_anime_by_id', {
+      p_mal_id: animeId,
+      p_parental_control: parentalControl,
+    })
+
+    if (error) {
+      throw AppError.database(`Failed to fetch anime ${animeId}`, { ...error })
+    }
+
+    return data[0] as Anime
+  },
+}
+```
+
+**Purpose:**
+- Direct database access
+- External API calls
+- Data mapping
+- Query optimization
+
+### Stores
+
+**Location:** `src/domains/{domain}/stores/{feature}-store.ts`
+
+```typescript src/domains/user/stores/user-list-store.ts
+import { create } from 'zustand'
+
+interface UserListsStore {
+  userList: Section[]
+  isLoading: boolean
+  setUserList: (userList: Section[]) => void
+  setIsLoading: (isLoading: boolean) => void
+}
+
+export const useUserListsStore = create<UserListsStore>((set) => ({
+  isLoading: false,
+  userList: [
+    { label: 'To Watch', icon: ToWatchIcon, selected: true },
+    { label: 'Collection', icon: CollectionIcon, selected: false },
+  ],
+  setUserList: (userList) => set({ userList }),
+  setIsLoading: (isLoading) => set({ isLoading }),
+}))
+```
+
+**Purpose:**
+- Client-side state management
+- UI state (modals, filters)
+- User preferences
+- Temporary data
+
+### Hooks
+
+**Location:** `src/domains/{domain}/hooks/{hook-name}.ts`
+
+```typescript src/domains/anime/hooks/useCarouselScroll.ts
+import { useRef } from 'react'
+
+export const useCarouselScroll = () => {
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  const handleScroll = (direction: 'left' | 'right') => {
+    if (!scrollRef.current) return
+    const scrollAmount = direction === 'left' ? -300 : 300
+    scrollRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' })
+  }
+
+  return { scrollRef, handleScroll }
+}
+```
+
+**Naming:** `use{Feature}{Action}.ts` or `use{Feature}.ts`
+
+## Pages & API Routes
+
+### Pages Structure
+
+```plaintext
+src/pages/
+├── anime/
+│   └── [slug].astro        # Dynamic route: /anime/naruto
+├── artist/
+│   └── [name].astro        # Dynamic route: /artist/lisa
+├── character/
+│   └── [id].astro          # Dynamic route: /character/123
+├── collection/
+│   └── [slug].astro        # Dynamic route: /collection/my-favorites
+├── music/
+│   ├── index.astro
+│   └── [id].astro
+├── profile/
+│   └── index.astro         # Route: /profile
+├── voice-actor/
+│   └── [id].astro
+├── watch/
+│   └── [slug].astro        # Dynamic route: /watch/naruto/episode-1
+├── api/                    # API endpoints
+│   ├── animes/
+│   │   ├── full.ts         # GET /api/animes/full
+│   │   ├── getAnime.ts     # GET /api/animes/getAnime
+│   │   ├── random.ts       # GET /api/animes/random
+│   │   └── studios.ts      # GET /api/studios
+│   ├── auth/
+│   │   ├── signin.ts       # POST /api/auth/signin
+│   │   └── signup.ts       # POST /api/auth/signup
+│   ├── episodes.ts         # GET /api/episodes
+│   ├── proxy.ts            # GET /api/proxy (image optimization)
+│   ├── saveImage.ts        # POST /api/saveImage
+│   ├── uploadImage.ts      # POST /api/uploadImage
+│   └── videoProxy.ts       # GET /api/videoProxy
+├── index.astro             # Homepage: /
+├── schedule.astro          # Route: /schedule
+├── search.astro            # Route: /search
+├── signin.astro            # Route: /signin
+├── signup.astro            # Route: /signup
+└── 404.astro               # Not found page
+```
+
+### API Endpoint Example
+
+```typescript src/pages/api/animes/getAnime.ts
+import { AnimeController } from '@anime/controllers'
+import { rateLimit } from '@middlewares/rate-limit'
+import type { APIRoute } from 'astro'
+
+export const GET: APIRoute = rateLimit(
+  async ({ url }) => {
+    try {
+      const response = await AnimeController.handleGetAnimeById(url)
+      return new Response(JSON.stringify(response), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      })
+    } catch (error) {
+      return new Response(
+        JSON.stringify({ error: getErrorMessage(error) }),
+        { status: getHttpStatus(error) }
+      )
+    }
+  },
+  { points: 100, duration: 60 }
+)
+```
+
+## Shared Utilities
+
+### Libraries (`src/libs/`)
+
+External service integrations:
+
+```plaintext
+src/libs/
+├── api.ts              # API client utilities
+├── gemini.ts           # Google Generative AI
+├── logger.ts           # Legacy logger
+├── pinata.ts           # IPFS/Pinata client
+├── pino.ts             # Structured logging
+├── redis.ts            # Redis connection
+├── supabase.ts         # Supabase client
+└── supabase-server.ts  # Server-side Supabase
+```
+
+### Middlewares (`src/middlewares/`)
+
+```plaintext
+src/middlewares/
+├── auth.ts                 # Session validation
+├── rate-limit.ts           # Rate limiting
+└── redis-connection.ts     # Redis health check
+```
+
+### Utilities (`src/utils/`)
+
+General-purpose functions:
+
+```plaintext
+src/utils/
+├── delete-search-history.ts
+├── filters-to-apply.ts
+├── format-score.ts
+├── get-anime-characters.ts
+├── get-anime-relations.ts
+├── get-broadcast.ts
+├── get-filters-of-search-params.ts
+├── get_session_user_info.ts
+├── normalize-rating.ts
+├── normalize-string.ts
+├── parse-response.ts
+├── redis-health-check.ts
+├── request-deduplicator.ts
+├── response-builder.ts
+├── shuffle-array.ts
+├── slug-to-text.ts
+└── upload-images.ts
+```
+
+## Path Aliases
+
+Clean imports using TypeScript path mapping:
+
+```json tsconfig.json
+{
+  "compilerOptions": {
+    "baseUrl": "src",
+    "paths": {
+      "@anime/*": ["domains/anime/*"],
+      "@artist/*": ["domains/artist/*"],
+      "@auth/*": ["domains/auth/*"],
+      "@cache/*": ["domains/cache/*"],
+      "@character/*": ["domains/character/*"],
+      "@collection/*": ["domains/collection/*"],
+      "@shared/*": ["domains/shared/*"],
+      "@user/*": ["domains/user/*"],
+      "@watch/*": ["domains/watch/*"],
+      "@libs/*": ["libs/*"],
+      "@utils/*": ["utils/*"],
+      "@middlewares/*": ["middlewares/*"],
+      "@constants": ["constants.ts"]
+    }
+  }
+}
+```
+
+**Usage:**
+
+```typescript
+// Instead of:
+import { AnimeService } from '../../../../domains/anime/services'
+
+// Use:
+import { AnimeService } from '@anime/services'
+```
+
+## File Naming Conventions
+
+<CardGroup cols={2}>
+  <Card title="Components" icon="file-code">
+    **kebab-case.tsx**
+    
+    - `anime-card.tsx`
+    - `search-bar.tsx`
+    - `user-profile-avatar.tsx`
+  </Card>
+
+  <Card title="Services/Repos" icon="file">
+    **index.ts**
+    
+    Export named objects:
+    - `AnimeService`
+    - `AnimeRepository`
+    - `AnimeController`
+  </Card>
+
+  <Card title="Stores" icon="box">
+    **{feature}-store.ts**
+    
+    - `auth-store.ts`
+    - `user-list-store.ts`
+    - `carousel-store.ts`
+  </Card>
+
+  <Card title="Hooks" icon="hook">
+    **use{Feature}.ts**
+    
+    - `useCarouselScroll.ts`
+    - `useFetchMusic.ts`
+    - `useAuthFormState.ts`
+  </Card>
+
+  <Card title="Types" icon="code">
+    **index.ts** or **{feature}.ts**
+    
+    - `index.ts`
+    - `api-response.ts`
+    - `anime-types.ts`
+  </Card>
+
+  <Card title="Utils" icon="wrench">
+    **kebab-case.ts**
+    
+    - `normalize-string.ts`
+    - `format-score.ts`
+    - `slug-to-text.ts`
+  </Card>
+</CardGroup>
+
+## Best Practices
+
+### 1. Domain Isolation
+
+```typescript
+// ✅ Good: Use domain services
+import { AnimeService } from '@anime/services'
+import { CacheService } from '@cache/services'
+
+// ❌ Bad: Direct repository access from controllers
+import { AnimeRepository } from '@anime/repositories'
+```
+
+### 2. Shared Code
+
+```typescript
+// ✅ Good: Use shared domain for common code
+import { AppError } from '@shared/errors'
+import { Button } from '@shared/components/buttons'
+
+// ❌ Bad: Duplicate code across domains
+```
+
+### 3. Type Imports
+
+```typescript
+// ✅ Good: Import types from domain
+import type { Anime } from '@anime/types'
+
+// ✅ Good: Use type keyword for clarity
+import { type User } from '@user/types'
+```
+
+### 4. Index Files
+
+```typescript
+// src/domains/anime/services/index.ts
+export const AnimeService = {
+  // All service methods
+}
+
+// Usage
+import { AnimeService } from '@anime/services'
+```
+
+<Note>
+  The domain-driven structure makes it easy to understand what each part of the application does. If you need anime functionality, look in `src/domains/anime/`. Need authentication? Check `src/domains/auth/`.
+</Note>

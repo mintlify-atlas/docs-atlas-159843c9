@@ -1,0 +1,545 @@
+---
+title: 'Tech Stack'
+description: 'Comprehensive overview of technologies, frameworks, and tools powering AniDev'
+---
+
+## Core Technologies
+
+AniDev is built on a modern, performant stack optimized for streaming and content delivery.
+
+### Framework & Runtime
+
+<CardGroup cols={2}>
+  <Card title="Astro 5.16.8" icon="rocket">
+    **Web Framework**
+    
+    Server-side rendering with islands architecture for optimal performance. Configured with:
+    - SSR mode (`output: 'server'`)
+    - Node.js adapter in standalone mode
+    - Automatic HTML compression
+    - Prefetch all strategy with viewport detection
+  </Card>
+
+  <Card title="TypeScript 5.8.3" icon="code">
+    **Type System**
+    
+    Strict type checking with Astro's strict tsconfig. Features:
+    - Path aliases for clean imports
+    - React JSX support
+    - Domain-driven type organization
+  </Card>
+
+  <Card title="React 19.2.3" icon="react">
+    **UI Library**
+    
+    Interactive islands for dynamic functionality:
+    - Video player components
+    - Search interfaces
+    - User profile management
+    - Drag-and-drop collections
+  </Card>
+
+  <Card title="Node.js (Standalone)" icon="node">
+    **Runtime Environment**
+    
+    Deployed as standalone Node.js server with:
+    - Environment-based configuration
+    - Graceful error handling
+    - Production optimizations
+  </Card>
+</CardGroup>
+
+### Why Astro?
+
+```javascript astro.config.mjs
+import node from '@astrojs/node'
+import react from '@astrojs/react'
+import { defineConfig } from 'astro/config'
+
+export default defineConfig({
+  output: 'server',
+  adapter: node({ mode: 'standalone' }),
+  integrations: [react(), auth()],
+  
+  compressHTML: true,
+  build: {
+    inlineStylesheets: 'auto',
+  },
+  prefetch: {
+    prefetchAll: true,
+    defaultStrategy: 'viewport',
+  },
+})
+```
+
+<Note>
+  Astro's islands architecture delivers near-instant page loads by sending minimal JavaScript to the client. Only interactive components hydrate, keeping bundle sizes small.
+</Note>
+
+## Backend & Data
+
+### Database & Authentication
+
+<Tabs>
+  <Tab title="Supabase">
+    **Backend-as-a-Service** (v2.90.1)
+
+    ```typescript src/libs/supabase.ts
+    import { createClient } from '@supabase/supabase-js'
+
+    export const supabase = createClient(
+      import.meta.env.SUPABASE_URL,
+      import.meta.env.SUPABASE_ANON_KEY,
+      {
+        auth: {
+          flowType: 'pkce', // Enhanced security
+        },
+      }
+    )
+    ```
+
+    **Features Used:**
+    - PostgreSQL database with RPC functions
+    - Row-level security (RLS)
+    - PKCE authentication flow
+    - Real-time subscriptions
+    - Server-side client for admin operations
+
+    **Key RPC Functions:**
+    - `get_anime_by_id` - Fetch anime with parental controls
+    - `get_animes_full` - Advanced anime search
+    - `get_related_anime` - Relationship queries
+    - `get_unique_studios` - Studio aggregation
+  </Tab>
+
+  <Tab title="Redis">
+    **Caching Layer** (v5.5.6)
+
+    ```typescript src/libs/redis.ts
+    import { createClient } from 'redis'
+
+    export async function getRedisClient() {
+      if (redisClient?.isReady) return redisClient
+
+      redisClient = createClient({
+        username: 'default',
+        password: import.meta.env.REDIS_PASSWORD,
+        socket: {
+          host: 'redis-14957.crce181.sa-east-1-2.ec2.redns.redis-cloud.com',
+          port: 14957,
+          connectTimeout: 10000,
+        },
+      })
+
+      await redisClient.connect()
+      return redisClient
+    }
+    ```
+
+    **Cache Strategy:**
+    - API response caching (60s - 1 year TTL)
+    - Image optimization cache
+    - Search result caching
+    - Deterministic key generation with SHA-256 hashing
+  </Tab>
+
+  <Tab title="Auth.js">
+    **Authentication** (v4.2.0 via auth-astro)
+
+    ```javascript auth.config.js
+    import { defineConfig } from 'auth-astro'
+
+    export default defineConfig({
+      providers: [
+        // OAuth providers
+        // Email/password auth
+      ],
+      callbacks: {
+        session: async ({ session, token }) => {
+          // Enhance session with user data
+          return session
+        },
+      },
+    })
+    ```
+
+    Integrated with Supabase for unified user management.
+  </Tab>
+</Tabs>
+
+## Styling & UI
+
+### TailwindCSS 4.1.10
+
+```javascript
+import tailwindcss from '@tailwindcss/vite'
+
+export default defineConfig({
+  vite: {
+    plugins: [tailwindcss()],
+  },
+})
+```
+
+**Custom Configuration:**
+- Utility-first CSS framework
+- Vite plugin for build optimization
+- Custom animations (`tailwind-animations`)
+- Responsive design system
+- Dark mode support
+
+**UI Components:**
+- Custom component library in `@shared/components`
+- Reusable patterns across domains
+- Accessibility-focused design
+
+## State Management & Forms
+
+<CardGroup cols={2}>
+  <Card title="Zustand 5.0.5" icon="box">
+    **Lightweight State**
+    
+    ```typescript
+    import { create } from 'zustand'
+
+    export const useAnimeStore = create((set) => ({
+      animes: [],
+      setAnimes: (animes) => set({ animes }),
+    }))
+    ```
+    
+    Used for:
+    - User preferences
+    - Search filters
+    - UI state (modals, sidebars)
+    - Anime lists and collections
+  </Card>
+
+  <Card title="Zod 3.25.63" icon="shield">
+    **Schema Validation**
+    
+    ```typescript
+    import { z } from 'zod'
+
+    const animeSchema = z.object({
+      mal_id: z.number().positive(),
+      title: z.string().min(1),
+      score: z.number().min(0).max(10),
+    })
+    ```
+    
+    Type-safe validation for:
+    - API request/response
+    - Form inputs
+    - Environment variables
+    - Database queries
+  </Card>
+</CardGroup>
+
+## Media & Content
+
+### Video Playback
+
+**Vidstack React** (v1.12.13)
+
+```typescript
+import { MediaPlayer, MediaProvider } from '@vidstack/react'
+
+<MediaPlayer src={videoUrl}>
+  <MediaProvider />
+  {/* Custom controls */}
+</MediaPlayer>
+```
+
+Features:
+- HLS/DASH streaming support
+- Custom controls and UI
+- Keyboard shortcuts
+- Quality selection
+- Progress tracking
+
+### Image Processing
+
+**Sharp** (v0.34.2) - Server-side optimization
+
+```typescript
+import sharp from 'sharp'
+
+const optimized = await sharp(inputBuffer)
+  .resize(width, height, { fit: 'cover' })
+  .webp({ quality: 80 })
+  .toBuffer()
+```
+
+**React Cropper** (v2.3.3) - Client-side editing
+
+```typescript
+import { Cropper } from 'react-cropper'
+
+<Cropper
+  src={image}
+  aspectRatio={1}
+  guides={false}
+  crop={onCrop}
+/>
+```
+
+### AI Integration
+
+**Google Generative AI** (v0.24.1)
+
+```typescript
+import { GoogleGenerativeAI } from '@google/generative-ai'
+
+const genAI = new GoogleGenerativeAI(apiKey)
+const model = genAI.getGenerativeModel({ model: 'gemini-pro' })
+
+const result = await model.generateContent(prompt)
+```
+
+Used for AI-powered anime recommendations.
+
+## Development Tools
+
+### Code Quality
+
+<Tabs>
+  <Tab title="Biome 1.9.4">
+    **Fast Formatter & Linter**
+
+    ```json biome.json
+    {
+      "formatter": {
+        "indentStyle": "space",
+        "indentWidth": 2,
+        "lineWidth": 80
+      },
+      "linter": {
+        "rules": {
+          "a11y": {
+            "noAccessKey": "error",
+            "useAltText": "error",
+            "useAriaProps": "error"
+          },
+          "correctness": {
+            "noUnusedVariables": "error",
+            "useJsxKeyInIterable": "error"
+          },
+          "security": {
+            "noDangerouslySetInnerHtmlWithChildren": "error"
+          }
+        }
+      }
+    }
+    ```
+
+    **Benefits:**
+    - 10-100x faster than ESLint
+    - Built-in formatter
+    - Accessibility rules
+    - Security checks
+  </Tab>
+
+  <Tab title="Prettier 3.5.3">
+    **Code Formatting**
+
+    ```javascript prettier.config.cjs
+    module.exports = {
+      plugins: [
+        'prettier-plugin-astro',
+        'prettier-plugin-tailwindcss',
+      ],
+      overrides: [
+        {
+          files: '*.astro',
+          options: { parser: 'astro' },
+        },
+      ],
+    }
+    ```
+
+    Astro and TailwindCSS support for consistent formatting.
+  </Tab>
+
+  <Tab title="Vitest 3.2.3">
+    **Testing Framework**
+
+    ```bash
+    pnpm test
+    ```
+
+    ```typescript
+    import { describe, it, expect } from 'vitest'
+
+    describe('MetadataService', () => {
+      it('fetches anime metadata', async () => {
+        const metadata = await MetadataService.getAnimeMetadata(21)
+        expect(metadata).toBeDefined()
+        expect(metadata.title).toBeTruthy()
+      })
+    })
+    ```
+
+    Fast unit and integration testing with Vite.
+  </Tab>
+</Tabs>
+
+## Performance & Monitoring
+
+### Error Tracking
+
+**Sentry** (v10.27.0)
+
+```javascript astro.config.mjs
+import sentry from '@sentry/astro'
+
+export default defineConfig({
+  integrations: [
+    sentry({
+      project: 'anidev',
+      org: 'sebas2007',
+      authToken: process.env.SENTRY_AUTH_TOKEN,
+    }),
+  ],
+})
+```
+
+Real-time error tracking and performance monitoring.
+
+### Rate Limiting
+
+**rate-limiter-flexible** (v7.1.1)
+
+```typescript src/middlewares/rate-limit.ts
+import { RateLimiterMemory } from 'rate-limiter-flexible'
+
+const limiter = new RateLimiterMemory({
+  points: 100,  // Requests
+  duration: 60, // Per 60 seconds
+})
+```
+
+API protection against abuse.
+
+### Logging
+
+**Pino** (v10.1.0) + **pino-pretty** (v13.1.2)
+
+```typescript src/libs/pino.ts
+import pino from 'pino'
+
+export const createContextLogger = (context: string) => {
+  return pino({
+    name: context,
+    level: process.env.LOG_LEVEL || 'info',
+    transport: {
+      target: 'pino-pretty',
+      options: { colorize: true },
+    },
+  })
+}
+```
+
+Structured, high-performance logging.
+
+## Interactive Components
+
+### Drag & Drop
+
+**dnd-kit** (v6.3.1)
+
+```typescript
+import { DndContext, closestCenter } from '@dnd-kit/core'
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
+
+<DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+  <SortableContext items={items} strategy={verticalListSortingStrategy}>
+    {items.map(item => <SortableItem key={item.id} id={item.id} />)}
+  </SortableContext>
+</DndContext>
+```
+
+User collection reordering and management.
+
+### Notifications
+
+**@pheralb/toast** (v1.0.0)
+
+```typescript
+import { toast } from '@pheralb/toast'
+
+toast.success({
+  text: 'Anime added to collection',
+  options: { autoDismiss: true },
+})
+```
+
+## Storage & CDN
+
+**Pinata** (v2.4.8) - IPFS Integration
+
+```typescript
+import { PinataSDK } from 'pinata'
+
+const pinata = new PinataSDK({
+  pinataJwt: process.env.PINATA_JWT,
+  pinataGateway: 'coffee-advanced-tern-335.mypinata.cloud',
+})
+
+const upload = await pinata.upload.file(file)
+```
+
+Decentralized storage for user-generated content.
+
+## Package Manager
+
+**pnpm** - Fast, disk space efficient
+
+```json package.json
+{
+  "pnpm": {
+    "overrides": {
+      "vite": "^7.3.1"
+    }
+  }
+}
+```
+
+<CardGroup cols={3}>
+  <Card title="Scripts" icon="terminal">
+    - `pnpm dev` - Development server
+    - `pnpm build` - Production build
+    - `pnpm test` - Run tests
+    - `pnpm format` - Format code
+  </Card>
+
+  <Card title="Dependencies" icon="cube">
+    50 production dependencies
+    
+    Carefully selected for:
+    - Performance
+    - Bundle size
+    - Maintainability
+  </Card>
+
+  <Card title="Version Control" icon="code-branch">
+    **standard-version** (v9.5.0)
+    
+    Automated versioning and CHANGELOG generation
+  </Card>
+</CardGroup>
+
+## Technology Selection Criteria
+
+Each technology was chosen based on:
+
+1. **Performance** - Fast runtime and build times
+2. **Developer Experience** - Clear APIs and documentation
+3. **Type Safety** - First-class TypeScript support
+4. **Bundle Size** - Minimal client-side JavaScript
+5. **Ecosystem** - Active maintenance and community
+6. **Security** - Regular updates and vulnerability patches
+
+<Note>
+  The stack emphasizes server-side rendering and minimal client JavaScript for optimal performance, while providing rich interactivity where needed through React islands.
+</Note>

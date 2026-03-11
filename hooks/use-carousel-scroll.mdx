@@ -1,0 +1,344 @@
+---
+title: "useCarouselScroll"
+description: "Custom hook for managing smooth scrolling behavior in carousel components with touch and keyboard support"
+---
+
+# useCarouselScroll
+
+The `useCarouselScroll` hook manages the scrolling behavior of carousel components, providing smooth navigation with support for touch gestures, keyboard controls, and automatic scrolling. It's specifically designed for anime banner carousels but can be adapted for any carousel use case.
+
+## Type Signature
+
+```typescript
+function useCarouselScroll(
+  banners: AnimeBannerInfo[] | null,
+  currentIndex: number,
+  setCurrentIndex: (index: number) => void
+): {
+  bannerContainerRef: RefObject<HTMLDivElement>
+  handleTouchStart: (e: React.TouchEvent) => void
+  handleTouchMove: (e: React.TouchEvent) => void
+  handleTouchEnd: () => void
+  handlePrev: () => void
+  handleNext: () => void
+  resetInterval: () => void
+  intervalRef: MutableRefObject<number | null>
+  handleScroll: (index: number) => void
+  handleKeyDown: (e: KeyboardEvent) => void
+}
+```
+
+## Parameters
+
+<ParamField path="banners" type="AnimeBannerInfo[] | null" required>
+  Array of banner items to display in the carousel. Can be null during initial loading.
+</ParamField>
+
+<ParamField path="currentIndex" type="number" required>
+  The current active index of the carousel (0-based)
+</ParamField>
+
+<ParamField path="setCurrentIndex" type="(index: number) => void" required>
+  Function to update the current index when navigation occurs
+</ParamField>
+
+## Return Value
+
+<ResponseField name="bannerContainerRef" type="RefObject<HTMLDivElement>">
+  React ref to attach to the scrollable container element
+</ResponseField>
+
+<ResponseField name="handleTouchStart" type="(e: React.TouchEvent) => void">
+  Event handler for touch start events (mobile swiping)
+</ResponseField>
+
+<ResponseField name="handleTouchMove" type="(e: React.TouchEvent) => void">
+  Event handler for touch move events (tracking swipe direction)
+</ResponseField>
+
+<ResponseField name="handleTouchEnd" type="() => void">
+  Event handler for touch end events (completing the swipe)
+</ResponseField>
+
+<ResponseField name="handlePrev" type="() => void">
+  Function to navigate to the previous banner
+</ResponseField>
+
+<ResponseField name="handleNext" type="() => void">
+  Function to navigate to the next banner
+</ResponseField>
+
+<ResponseField name="resetInterval" type="() => void">
+  Function to reset the auto-scroll timer
+</ResponseField>
+
+<ResponseField name="intervalRef" type="MutableRefObject<number | null>">
+  Reference to the auto-scroll interval timer
+</ResponseField>
+
+<ResponseField name="handleScroll" type="(index: number) => void">
+  Function to scroll to a specific index
+</ResponseField>
+
+<ResponseField name="handleKeyDown" type="(e: KeyboardEvent) => void">
+  Event handler for keyboard navigation (arrow keys)
+</ResponseField>
+
+## Usage Examples
+
+### Basic Anime Banner Carousel
+
+```typescript
+import { useCarouselScroll } from '@hooks/useCarouselScroll'
+import { useState, useEffect } from 'react'
+import type { AnimeBannerInfo } from '@anime/types'
+
+const AnimeBannerCarousel = ({ banners }: { banners: AnimeBannerInfo[] }) => {
+  const [currentIndex, setCurrentIndex] = useState(0)
+  
+  const {
+    bannerContainerRef,
+    handleNext,
+    handlePrev,
+    handleTouchStart,
+    handleTouchMove,
+    handleTouchEnd,
+    handleKeyDown,
+    resetInterval,
+  } = useCarouselScroll(banners, currentIndex, setCurrentIndex)
+
+  useEffect(() => {
+    // Set up keyboard navigation
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [handleKeyDown])
+
+  useEffect(() => {
+    // Start auto-scroll
+    resetInterval()
+  }, [])
+
+  return (
+    <div className="carousel">
+      <div
+        ref={bannerContainerRef}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        className="carousel-container"
+      >
+        {banners.map((banner, index) => (
+          <div key={banner.mal_id} className="carousel-item">
+            <img src={banner.image} alt={banner.title} />
+          </div>
+        ))}
+      </div>
+      
+      <button onClick={handlePrev}>Previous</button>
+      <button onClick={handleNext}>Next</button>
+      
+      <div className="indicators">
+        {banners.map((_, index) => (
+          <span
+            key={index}
+            className={index === currentIndex ? 'active' : ''}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+```
+
+### Carousel with Custom Auto-Scroll
+
+```typescript
+const CustomCarousel = ({ items }) => {
+  const [currentIndex, setCurrentIndex] = useState(0)
+  
+  const {
+    bannerContainerRef,
+    handleNext,
+    handlePrev,
+    resetInterval,
+    intervalRef,
+  } = useCarouselScroll(items, currentIndex, setCurrentIndex)
+
+  // Custom auto-scroll interval (different from default 7000ms)
+  useEffect(() => {
+    if (intervalRef.current) clearInterval(intervalRef.current)
+    
+    intervalRef.current = window.setInterval(() => {
+      handleNext()
+    }, 5000) // 5 seconds instead of default 7
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current)
+    }
+  }, [handleNext])
+
+  return (
+    <div ref={bannerContainerRef} className="carousel">
+      {items.map(item => (
+        <div key={item.id}>{item.content}</div>
+      ))}
+    </div>
+  )
+}
+```
+
+### Infinite Loop Carousel
+
+```typescript
+const InfiniteCarousel = ({ slides }) => {
+  const [currentIndex, setCurrentIndex] = useState(0)
+  
+  const {
+    bannerContainerRef,
+    handleNext,
+    handlePrev,
+  } = useCarouselScroll(slides, currentIndex, setCurrentIndex)
+
+  // The hook automatically handles looping:
+  // - Going next from last item returns to first
+  // - Going prev from first item goes to last
+
+  return (
+    <div>
+      <div ref={bannerContainerRef} className="slides">
+        {slides.map(slide => (
+          <div key={slide.id}>{slide.content}</div>
+        ))}
+      </div>
+      <button onClick={handlePrev}>←</button>
+      <button onClick={handleNext}>→</button>
+    </div>
+  )
+}
+```
+
+### Carousel with Touch Feedback
+
+```typescript
+const TouchCarousel = ({ items }) => {
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [isSwiping, setIsSwiping] = useState(false)
+  
+  const {
+    bannerContainerRef,
+    handleTouchStart,
+    handleTouchMove,
+    handleTouchEnd,
+  } = useCarouselScroll(items, currentIndex, setCurrentIndex)
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setIsSwiping(true)
+    handleTouchStart(e)
+  }
+
+  const onTouchEnd = () => {
+    setIsSwiping(false)
+    handleTouchEnd()
+  }
+
+  return (
+    <div
+      ref={bannerContainerRef}
+      onTouchStart={onTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={onTouchEnd}
+      className={isSwiping ? 'swiping' : ''}
+    >
+      {items.map(item => (
+        <div key={item.id}>{item.content}</div>
+      ))}
+    </div>
+  )
+}
+```
+
+## Features
+
+### Touch Navigation
+- **Swipe Detection**: Detects left/right swipes with 30px threshold
+- **Smooth Transitions**: Uses native smooth scrolling behavior
+- **Touch Tracking**: Maintains touch start and end positions
+
+### Keyboard Navigation
+- **Arrow Left**: Navigate to previous banner
+- **Arrow Right**: Navigate to next banner
+- **Accessibility**: Full keyboard navigation support
+
+### Auto-Scroll
+- **Default Interval**: 7 seconds between automatic transitions
+- **Auto-Reset**: Timer resets when user manually navigates
+- **Cleanup**: Properly clears intervals on unmount
+
+### Infinite Loop
+- **Seamless Wrapping**: Automatically loops from last to first and vice versa
+- **No Interruption**: Smooth transitions at loop boundaries
+
+## Use Cases
+
+- **Homepage banners** showcasing featured anime
+- **Image galleries** with touch/keyboard navigation
+- **Featured content** carousels
+- **Character showcases** on anime detail pages
+- **Episode previews** in a scrollable list
+- **Promotional content** rotation
+
+## Configuration
+
+### Swipe Threshold
+
+The hook uses a 30px swipe threshold by default. To detect a swipe, users must move their finger at least 30px horizontally:
+
+```typescript
+// In the hook implementation:
+if (deltaX > 30) {
+  handleNext() // Swipe left
+} else if (deltaX < -30) {
+  handlePrev() // Swipe right
+}
+```
+
+### Auto-Scroll Interval
+
+Default auto-scroll interval is 7000ms (7 seconds):
+
+```typescript
+intervalRef.current = window.setInterval(() => {
+  handleNext()
+}, 7000)
+```
+
+<Note>
+  The auto-scroll interval automatically resets whenever the user manually navigates using buttons, touch gestures, or keyboard controls. This provides a better user experience by giving users time to interact with the current item.
+</Note>
+
+## Accessibility
+
+- ✅ Full keyboard navigation support
+- ✅ Touch gesture support for mobile users
+- ✅ Mouse click support via navigation buttons
+- ✅ Programmatic scroll control
+- ✅ Proper cleanup of event listeners and timers
+
+<Tip>
+  Always provide visible navigation buttons in addition to touch/keyboard controls for maximum accessibility:
+  ```typescript
+  <button onClick={handlePrev} aria-label="Previous slide">←</button>
+  <button onClick={handleNext} aria-label="Next slide">→</button>
+  ```
+</Tip>
+
+## Performance Considerations
+
+- Uses `useCallback` to memoize event handlers
+- Properly cleans up intervals and event listeners
+- Smooth scrolling uses native browser optimization
+- Touch events are efficiently tracked with refs
+
+## Source
+
+Location: `src/domains/anime/hooks/useCarouselScroll.ts:33`

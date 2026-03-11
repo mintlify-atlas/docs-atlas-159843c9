@@ -1,0 +1,392 @@
+---
+title: 'Authentication Middleware'
+description: 'Secure your API endpoints with session-based authentication'
+icon: 'lock'
+---
+
+# Authentication Middleware
+
+The `checkSession` middleware ensures that only authenticated users can access protected API endpoints. It validates user sessions using Supabase Auth and automatically attaches user information to the request context.
+
+## Installation
+
+Import the middleware from `@middlewares/auth` and wrap your API handler:
+
+```typescript
+import { checkSession } from '@middlewares/auth'
+import type { APIRoute } from 'astro'
+
+export const POST: APIRoute = checkSession(async (context) => {
+  // Your protected API handler logic
+  const userInfo = context.locals.userInfo
+  return new Response(JSON.stringify({ data: 'Protected data' }), { status: 200 })
+})
+```
+
+## TypeScript Signature
+
+```typescript
+const checkSession: (
+  handler: (context: APIContext) => Promise<Response>
+) => (context: APIContext) => Promise<Response>
+```
+
+<ParamField path="handler" type="Function" required>
+  The API route handler function to protect with session validation. Receives an `APIContext` with authenticated user info and returns a `Promise<Response>`.
+</ParamField>
+
+## How It Works
+
+1. **Session Validation**: Checks for a valid user session using `getSessionUserInfo()`
+2. **User Info Injection**: Attaches user information to `context.locals.userInfo`
+3. **Access Control**: Returns 401 Unauthorized if no valid session exists
+4. **Error Handling**: Catches and logs authentication errors
+
+## Configuration
+
+The middleware uses Supabase Auth for session management. No additional configuration is required, but ensure your environment variables are set:
+
+```env
+SUPABASE_URL=your_supabase_url
+SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+## Example Usage
+
+### Basic Authentication
+
+```typescript title="src/pages/api/uploadImage.ts"
+import { checkSession } from '@middlewares/auth'
+import { UploadController } from '@shared/controllers/upload-controller'
+import { ResponseBuilder } from '@utils/response-builder'
+import type { APIRoute } from 'astro'
+
+export const POST: APIRoute = checkSession(async ({ request }) => {
+  try {
+    const url = await UploadController.handleUpload(request)
+    return ResponseBuilder.success({ data: url })
+  } catch (error) {
+    return ResponseBuilder.fromError(error, 'POST /api/uploadImage')
+  }
+})
+```
+
+### Accessing User Information
+
+```typescript title="src/pages/api/user/saveUserPreferences.ts"
+import { checkSession } from '@middlewares/auth'
+import { UserController } from '@user/controllers'
+import { ResponseBuilder } from '@utils/response-builder'
+import type { APIRoute } from 'astro'
+
+export const POST: APIRoute = checkSession(async ({ request, cookies }) => {
+  try {
+    const data = await UserController.handleUpdatePreferences(request, cookies)
+    return ResponseBuilder.success({
+      data,
+    })
+  } catch (error) {
+    return ResponseBuilder.fromError(error, 'POST /api/saveUserPreferences')
+  }
+})
+```
+
+### Multiple HTTP Methods
+
+Protect multiple methods on the same endpoint:
+
+```typescript title="src/pages/api/user/watchList.ts"
+import { checkSession } from '@middlewares/auth'
+import { UserController } from '@user/controllers'
+import { ResponseBuilder } from '@utils/response-builder'
+import type { APIRoute } from 'astro'
+
+export const POST: APIRoute = checkSession(async ({ request, cookies }) => {
+  try {
+    await UserController.handleAddToWatchList(request, cookies)
+    return ResponseBuilder.success({
+      data: { message: 'Anime added to watch list' },
+    })
+  } catch (error) {
+    return ResponseBuilder.fromError(error, 'POST /api/watchList')
+  }
+})
+
+export const DELETE: APIRoute = checkSession(async ({ request, cookies }) => {
+  try {
+    await UserController.handleRemoveFromWatchList(request, cookies)
+    return ResponseBuilder.success({
+      data: { message: 'Anime removed from watch list' },
+    })
+  } catch (error) {
+    return ResponseBuilder.fromError(error, 'DELETE /api/watchList')
+  }
+})
+
+export const GET: APIRoute = checkSession(async ({ request, cookies }) => {
+  try {
+    const data = await UserController.handleGetWatchList(request, cookies)
+    return ResponseBuilder.success(data)
+  } catch (error) {
+    return ResponseBuilder.fromError(error, 'GET /api/watchList')
+  }
+})
+```
+
+<Note>
+Each HTTP method (GET, POST, DELETE, PUT, PATCH) can be individually wrapped with `checkSession` to protect specific operations.
+</Note>
+
+## User Information
+
+After successful authentication, user information is available in `context.locals.userInfo`:
+
+```typescript
+export const POST: APIRoute = checkSession(async (context) => {
+  const userInfo = context.locals.userInfo
+  
+  // Access user properties
+  console.log(userInfo.id)      // User ID
+  console.log(userInfo.email)   // User email
+  // ... other user properties
+  
+  // Use in your handler logic
+  return new Response(JSON.stringify({ userId: userInfo.id }))
+})
+```
+
+## Error Handling
+
+### Unauthorized (401)
+
+When no valid session is found:
+
+```json
+{
+  "error": "Unauthorized"
+}
+```
+
+```http
+HTTP/1.1 401 Unauthorized
+Content-Type: application/json
+```
+
+<ParamField path="error" type="string">
+  Error message indicating the request lacks valid authentication credentials.
+</ParamField>
+
+<Warning>
+Clients should redirect to the login page when receiving a 401 response. Ensure your frontend handles this appropriately.
+</Warning>
+
+### Internal Server Error (500)
+
+When session verification fails unexpectedly:
+
+```json
+{
+  "error": "An internal server error occurred"
+}
+```
+
+```http
+HTTP/1.1 500 Internal Server Error
+Content-Type: application/json
+```
+
+<Note>
+Internal server errors are logged with the `AuthMiddleware` context logger for debugging purposes.
+</Note>
+
+## Client-Side Integration
+
+### Making Authenticated Requests
+
+Ensure cookies are included in your API requests:
+
+```typescript
+const response = await fetch('/api/user/saveUserPreferences', {
+  method: 'POST',
+  credentials: 'include', // Important: Include cookies
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  body: JSON.stringify({
+    theme: 'dark',
+    parentalControl: true,
+  }),
+})
+
+if (response.status === 401) {
+  // Redirect to login
+  window.location.href = '/signin'
+}
+```
+
+### Handling Authentication Errors
+
+```typescript
+try {
+  const response = await fetch('/api/uploadImage', {
+    method: 'POST',
+    credentials: 'include',
+    body: formData,
+  })
+
+  if (response.status === 401) {
+    console.error('User not authenticated')
+    // Redirect to login or show login modal
+    return
+  }
+
+  if (response.status === 500) {
+    console.error('Server error during authentication')
+    // Show error message to user
+    return
+  }
+
+  const data = await response.json()
+  // Handle successful response
+} catch (error) {
+  console.error('Request failed:', error)
+}
+```
+
+## Session Management
+
+### Session Validation Process
+
+The middleware uses `getSessionUserInfo()` which:
+
+1. Extracts session cookies from the request
+2. Validates the session with Supabase Auth
+3. Returns user information if valid
+4. Returns `null` if invalid or expired
+
+### Session Lifecycle
+
+```typescript
+// User logs in
+POST /api/auth/signin
+// Session cookie is set
+
+// Make authenticated requests
+POST /api/user/saveUserPreferences
+// checkSession validates the cookie
+
+// Session expires or user logs out
+POST /api/auth/signout
+// Session cookie is cleared
+```
+
+## Best Practices
+
+### Protect Sensitive Endpoints
+
+Always use `checkSession` for operations that:
+
+- Modify user data
+- Access private information
+- Perform actions on behalf of a user
+
+<CodeGroup>
+
+```typescript Protected (Correct)
+import { checkSession } from '@middlewares/auth'
+
+export const POST = checkSession(async ({ request }) => {
+  // User-specific operation
+})
+```
+
+```typescript Unprotected (Wrong)
+// ❌ Don't do this for user-specific operations
+export const POST = async ({ request }) => {
+  // Anyone can access this!
+}
+```
+
+</CodeGroup>
+
+### Combine with Rate Limiting
+
+For production endpoints, combine authentication with rate limiting:
+
+```typescript
+import { checkSession } from '@middlewares/auth'
+import { rateLimit } from '@middlewares/rate-limit'
+
+// Note: checkSession should be the inner middleware
+export const POST = rateLimit(
+  checkSession(async ({ request }) => {
+    // Protected and rate-limited
+  }),
+  { points: 30, duration: 60 }
+)
+```
+
+<Warning>
+When combining middlewares, apply them in the correct order:
+1. Rate limiting (outer)
+2. Authentication (inner)
+
+This ensures rate limiting happens first, protecting your authentication system from brute force attacks.
+</Warning>
+
+### Handle User Context Properly
+
+```typescript
+export const POST: APIRoute = checkSession(async (context) => {
+  // ✅ Good: User info is guaranteed to exist
+  const userInfo = context.locals.userInfo
+  
+  // Use TypeScript assertions if needed
+  const userId = userInfo!.id
+  
+  // Perform user-specific operations
+  await saveUserData(userId, data)
+})
+```
+
+### Error Logging
+
+The middleware automatically logs errors with context:
+
+```typescript
+logger.error('[AuthMiddleware] Error verifying session', error)
+```
+
+Monitor these logs to:
+- Detect authentication issues
+- Identify session validation failures
+- Track potential security threats
+
+## Security Considerations
+
+<Warning>
+**Cookie Security**: Ensure your Supabase configuration uses secure, httpOnly cookies in production to prevent XSS attacks.
+</Warning>
+
+<Warning>
+**HTTPS Required**: Always use HTTPS in production to protect session cookies from interception.
+</Warning>
+
+<Note>
+**CORS Configuration**: If your API is accessed from different domains, ensure CORS is properly configured to include credentials.
+</Note>
+
+### Production Checklist
+
+- [ ] HTTPS enabled on production domain
+- [ ] Secure cookie flags set in Supabase config
+- [ ] CORS properly configured for credential sharing
+- [ ] Rate limiting applied to auth endpoints
+- [ ] Error monitoring for auth failures
+- [ ] Session timeout configured appropriately
+
+## Related
+
+- [Rate Limiting Middleware](/middleware/rate-limiting) - Protect endpoints from abuse
+- [Authentication API](/api-reference/auth) - User authentication endpoints
+- [User API](/api-reference/user) - User management endpoints
