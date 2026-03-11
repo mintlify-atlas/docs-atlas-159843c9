@@ -119,7 +119,7 @@
     ]
   },
   "keyFeatures": [
-    "Anime streaming with Video.js integration",
+    "Anime streaming with Vidstack player integration",
     "Advanced search with multiple filters (genre, year, studio, rating)",
     "User authentication with Supabase",
     "Personal anime collections and watch lists",

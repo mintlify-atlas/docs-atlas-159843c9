@@ -130,15 +130,15 @@ if response.status_code in [200, 206]:
 ## Usage in Video Players
 
 <CodeGroup>
-```javascript Video.js
-import videojs from 'video.js';
+```jsx Vidstack React
+import { MediaPlayer, MediaProvider } from '@vidstack/react';
 
-const player = videojs('my-video', {
-  sources: [{
-    src: `/api/videoProxy?url=${encodeURIComponent(playlistUrl)}`,
-    type: 'application/x-mpegURL'
-  }]
-});
+<MediaPlayer
+  src={`/api/videoProxy?url=${encodeURIComponent(playlistUrl)}`}
+  aspectRatio="16/9"
+>
+  <MediaProvider />
+</MediaPlayer>
 ```
 
 ```html HTML5 Video

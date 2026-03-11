@@ -51,7 +51,7 @@ This endpoint is protected by rate limiting middleware:
   </ResponseField>
   
   <ResponseField name="video_url" type="string">
-    URL to the video stream for this episode. Can be used with video players like Video.js.
+    URL to the video stream for this episode. Can be used with video players like Vidstack.
   </ResponseField>
   
   <ResponseField name="image_url" type="string">
@@ -249,24 +249,27 @@ function EpisodePlayer({ malId, episodeNumber }) {
 
 ### Video Player Integration
 
-This endpoint is designed to work seamlessly with video players like Video.js:
+This endpoint is designed to work seamlessly with video players like Vidstack:
 
-```javascript
-import videojs from 'video.js';
+```jsx
+import { MediaPlayer, MediaProvider } from '@vidstack/react';
 
-const initPlayer = async (malId, episodeNumber) => {
-  const response = await fetch(
-    `/api/episodes/getEpisode?mal_id=${malId}&ep=${episodeNumber}`
+const VideoPlayer = ({ malId, episodeNumber }) => {
+  const [episode, setEpisode] = React.useState(null);
+
+  React.useEffect(() => {
+    fetch(`/api/episodes/getEpisode?mal_id=${malId}&ep=${episodeNumber}`)
+      .then(res => res.json())
+      .then(({ data }) => setEpisode(data));
+  }, [malId, episodeNumber]);
+
+  if (!episode) return <div>Loading...</div>;
+
+  return (
+    <MediaPlayer src={episode.video_url} poster={episode.image_url}>
+      <MediaProvider />
+    </MediaPlayer>
   );
-  const { data } = await response.json();
-
-  const player = videojs('video-player', {
-    sources: [{
-      src: data.video_url,
-      type: 'application/x-mpegURL'
-    }],
-    poster: data.image_url
-  });
 };
 ```
 
