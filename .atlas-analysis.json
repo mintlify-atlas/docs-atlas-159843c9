@@ -1,0 +1,146 @@
+{
+  "projectType": "saas",
+  "projectName": "AniDev",
+  "projectDescription": "A modern anime streaming and exploration platform with user profiles, collections, and advanced search capabilities.",
+  "theme": "palm",
+  "primaryColor": "#3f6fea",
+  "lightColor": "#b1c4f4",
+  "darkColor": null,
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart",
+              "installation"
+            ]
+          },
+          {
+            "group": "Core Features",
+            "pages": [
+              "features/anime-streaming",
+              "features/search-discovery",
+              "features/user-collections",
+              "features/progress-tracking",
+              "features/schedule-system"
+            ]
+          },
+          {
+            "group": "User Guide",
+            "pages": [
+              "user-guide/authentication",
+              "user-guide/profile-management",
+              "user-guide/collections",
+              "user-guide/preferences"
+            ]
+          },
+          {
+            "group": "Development",
+            "pages": [
+              "development/architecture",
+              "development/tech-stack",
+              "development/project-structure",
+              "development/testing"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Anime",
+            "pages": [
+              "api/animes/overview",
+              "api/animes/get-animes",
+              "api/animes/get-anime-details",
+              "api/animes/random-anime"
+            ]
+          },
+          {
+            "group": "Episodes",
+            "pages": [
+              "api/episodes/list-episodes",
+              "api/episodes/get-episode"
+            ]
+          },
+          {
+            "group": "Authentication",
+            "pages": [
+              "api/auth/signup",
+              "api/auth/signin"
+            ]
+          },
+          {
+            "group": "Media",
+            "pages": [
+              "api/media/video-proxy",
+              "api/media/image-proxy",
+              "api/media/upload-image"
+            ]
+          },
+          {
+            "group": "User",
+            "pages": [
+              "api/user/preferences",
+              "api/user/collections"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Hooks & Components",
+        "groups": [
+          {
+            "group": "Custom Hooks",
+            "pages": [
+              "hooks/use-fetch",
+              "hooks/use-debounce",
+              "hooks/use-dynamic-border",
+              "hooks/use-shortcuts",
+              "hooks/use-carousel-scroll",
+              "hooks/use-url-sync",
+              "hooks/use-drag-and-drop"
+            ]
+          },
+          {
+            "group": "Middleware",
+            "pages": [
+              "middleware/rate-limiting",
+              "middleware/authentication"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Anime streaming with Video.js integration",
+    "Advanced search with multiple filters (genre, year, studio, rating)",
+    "User authentication with Supabase",
+    "Personal anime collections and watch lists",
+    "Progress tracking and watch history",
+    "Schedule system for upcoming releases",
+    "Redis caching for performance",
+    "Image optimization and cropping",
+    "Rate limiting for API protection",
+    "Responsive design with TailwindCSS"
+  ],
+  "publicApiSurface": [
+    "/api/animes/full",
+    "/api/animes/random",
+    "/api/animes/getAnime",
+    "/api/episodes",
+    "/api/getEpisode",
+    "/api/videoProxy",
+    "/api/proxy",
+    "/api/auth/signup",
+    "/api/auth/signin",
+    "/api/uploadImage",
+    "/api/saveUserPreferences"
+  ]
+}
